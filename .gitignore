@@ -1,0 +1,17 @@
+node_modules
+dist
+coverage
+.firebase
+.firebaserc
+.env
+.env.local
+.env.development.local
+.env.production.local
+functions/lib
+functions/node_modules
+firebase-debug.log
+ui-debug.log
+*.log
+.DS_Store
+Thumbs.db
+

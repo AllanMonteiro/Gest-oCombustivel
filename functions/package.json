@@ -1,0 +1,27 @@
+{
+  "name": "controle-combustivel-functions",
+  "version": "0.1.0",
+  "private": true,
+  "main": "lib/index.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "build": "node scripts/run-tsc.cjs",
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "dependencies": {
+    "date-fns": "^4.1.0",
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.3.2",
+    "nodemailer": "^6.10.1",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "^6.4.17",
+    "typescript": "^5.7.3"
+  }
+}

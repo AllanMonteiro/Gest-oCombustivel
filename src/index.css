@@ -1,0 +1,65 @@
+﻿@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+    font-family:
+      "Segoe UI", "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+      sans-serif;
+    background-color: #f5f9fc;
+    color: #123047;
+  }
+
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    margin: 0;
+    min-height: 100vh;
+    background-image: radial-gradient(
+      circle at top,
+      rgba(0, 183, 167, 0.14),
+      transparent 35%
+    );
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(12, 79, 116, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(12, 79, 116, 0.04) 1px, transparent 1px);
+    background-size: 24px 24px;
+    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.75), transparent);
+  }
+
+  #root {
+    min-height: 100vh;
+    position: relative;
+  }
+}
+
+@layer components {
+  .page-shell {
+    @apply min-h-screen bg-background text-foreground;
+  }
+
+  .page-title {
+    @apply text-3xl font-semibold tracking-tight text-foreground;
+  }
+
+  .page-subtitle {
+    @apply text-sm leading-6 text-muted-foreground;
+  }
+}
