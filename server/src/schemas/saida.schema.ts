@@ -1,4 +1,4 @@
-import { z } from "zod";
+﻿import { z } from "zod";
 
 export const createSaidaSchema = z.object({
   data: z.string().min(1),
@@ -10,6 +10,7 @@ export const createSaidaSchema = z.object({
   areaNome: z.string().optional(),
   equipamentoId: z.string().uuid().optional(),
   equipamentoNome: z.string().optional(),
+  requisicao: z.string().optional(),
   observacao: z.string().optional(),
   movementType: z.enum(["regular", "loan_out", "return_out"]).default("regular"),
   partnerName: z.string().optional(),
@@ -18,6 +19,7 @@ export const createSaidaSchema = z.object({
     if (!data.usuarioNome) context.addIssue({ code: z.ZodIssueCode.custom, path: ["usuarioNome"], message: "Usuario obrigatorio." });
     if (!data.areaNome) context.addIssue({ code: z.ZodIssueCode.custom, path: ["areaNome"], message: "Area obrigatoria." });
     if (!data.equipamentoNome) context.addIssue({ code: z.ZodIssueCode.custom, path: ["equipamentoNome"], message: "Equipamento obrigatorio." });
+    if (!data.requisicao) context.addIssue({ code: z.ZodIssueCode.custom, path: ["requisicao"], message: "Requisicao obrigatoria." });
   }
 });
 

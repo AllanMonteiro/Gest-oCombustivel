@@ -1,4 +1,4 @@
-import type { RelatorioMovimentacoesInput } from "../schemas/relatorio.schema.js";
+﻿import type { RelatorioMovimentacoesInput } from "../schemas/relatorio.schema.js";
 import { getRelatorioMovimentacoesData } from "../repositories/estoque.repository.js";
 
 function csvEscape(value: unknown) {
@@ -25,7 +25,7 @@ export async function getRelatorioMovimentacoesService(filters: RelatorioMovimen
 
 export async function exportRelatorioMovimentacoesCsvService(filters: RelatorioMovimentacoesInput) {
   const relatorio = await getRelatorioMovimentacoesService(filters);
-  const header = ["tipo", "data", "combustivel", "litros", "status", "responsavel", "area", "equipamento", "parceiro"];
+  const header = ["tipo", "data", "combustivel", "litros", "status", "responsavel", "area", "equipamento", "requisicao", "parceiro"];
 
   const rows = [
     ...relatorio.entradas.map((item) => [
@@ -35,6 +35,7 @@ export async function exportRelatorioMovimentacoesCsvService(filters: RelatorioM
       item.litros,
       item.status,
       item.created_by_nome,
+      "",
       "",
       "",
       item.partner_name ?? "",
@@ -48,6 +49,7 @@ export async function exportRelatorioMovimentacoesCsvService(filters: RelatorioM
       item.usuario_nome || item.created_by_nome,
       item.area_nome ?? "",
       item.equipamento_nome ?? "",
+      item.requisicao ?? "",
       item.partner_name ?? "",
     ]),
   ];

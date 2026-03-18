@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "../config/supabase.js";
+﻿import { supabaseAdmin } from "../config/supabase.js";
 import type { DashboardFilters } from "../types/domain.js";
 import { HttpError } from "../utils/http-error.js";
 
@@ -86,6 +86,7 @@ export async function callCreateSaidaRpc(payload: Record<string, unknown>, actor
       area_nome: area.nome,
       equipamento_id: equipamento.id,
       equipamento_nome: equipamento.nome,
+      requisicao: payload.requisicao,
       observacao: payload.observacao,
       movement_type: payload.movementType,
       partner_name: payload.partnerName,
@@ -187,6 +188,7 @@ export async function updateExitData(id: string, payload: Record<string, unknown
     area_nome: area.nome,
     equipamento_id: equipamento.id,
     equipamento_nome: equipamento.nome,
+    requisicao: payload.requisicao,
     observacao: payload.observacao,
     movement_type: payload.movementType,
     partner_name: payload.partnerName,
@@ -230,7 +232,7 @@ export async function getDashboardBaseData(filters: DashboardFilters) {
 
   const exitsQuery = supabaseAdmin
     .from("saidas_combustivel")
-    .select("id, data, combustivel_id, combustivel_nome, litros, area_id, area_nome, equipamento_id, equipamento_nome, usuario_id, usuario_nome, observacao, movement_type, partner_name, status, cancellation_reason")
+    .select("id, data, combustivel_id, combustivel_nome, litros, area_id, area_nome, equipamento_id, equipamento_nome, usuario_id, usuario_nome, requisicao, observacao, movement_type, partner_name, status, cancellation_reason")
     .order("data", { ascending: false });
 
   if (filters.combustivelId) {
@@ -274,7 +276,7 @@ export async function getRelatorioMovimentacoesData(filters: DashboardFilters & 
 
   const exitsQuery = supabaseAdmin
     .from("saidas_combustivel")
-    .select("id, data, combustivel_id, combustivel_nome, litros, area_id, area_nome, equipamento_id, equipamento_nome, usuario_id, usuario_nome, movement_type, partner_name, status, created_by_nome, cancellation_reason")
+    .select("id, data, combustivel_id, combustivel_nome, litros, area_id, area_nome, equipamento_id, equipamento_nome, usuario_id, usuario_nome, requisicao, movement_type, partner_name, status, created_by_nome, cancellation_reason")
     .order("data", { ascending: false });
 
   if (filters.combustivelId) {
@@ -375,3 +377,5 @@ export async function cancelExitData(id: string, reason: string, actorId: string
 
   return updated;
 }
+
+

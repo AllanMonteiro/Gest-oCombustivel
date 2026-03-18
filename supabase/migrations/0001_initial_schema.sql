@@ -1,4 +1,4 @@
-create extension if not exists pgcrypto;
+﻿create extension if not exists pgcrypto;
 
 create table if not exists public.users (
   id uuid primary key references auth.users (id) on delete cascade,
@@ -73,6 +73,7 @@ create table if not exists public.saidas_combustivel (
   area_nome text,
   equipamento_id uuid references public.equipamentos (id),
   equipamento_nome text,
+  requisicao text,
   observacao text,
   movement_type text not null default 'regular' check (movement_type in ('regular', 'loan_out', 'return_out')),
   partner_name text,
@@ -405,6 +406,7 @@ declare
   v_area_nome text;
   v_equipamento_id uuid;
   v_equipamento_nome text;
+  v_requisicao text;
   v_observacao text;
   v_movement_type text;
   v_partner_name text;
@@ -463,6 +465,7 @@ begin
     area_nome,
     equipamento_id,
     equipamento_nome,
+    requisicao,
     observacao,
     movement_type,
     partner_name,
@@ -479,6 +482,7 @@ begin
     v_area_nome,
     v_equipamento_id,
     v_equipamento_nome,
+    v_requisicao,
     v_observacao,
     v_movement_type,
     v_partner_name,
@@ -535,3 +539,4 @@ create policy email_settings_read_admin on public.email_summary_settings for sel
 
 drop policy if exists email_settings_update_admin on public.email_summary_settings;
 create policy email_settings_update_admin on public.email_summary_settings for update to authenticated using (public.current_app_role() = 'admin') with check (public.current_app_role() = 'admin');
+

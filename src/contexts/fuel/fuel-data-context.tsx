@@ -1,4 +1,4 @@
-import {
+﻿import {
   createContext,
   type PropsWithChildren,
   useContext,
@@ -53,6 +53,7 @@ export interface FuelExitRecord extends CancellationData {
   usuarioNome: string;
   area: string;
   equipamento: string;
+  requisicao?: string;
   observacao?: string;
   movementType: ExitMovementType;
   partnerName?: string;
@@ -227,6 +228,7 @@ function toLocalExit(item: RemoteExitRecord): FuelExitRecord {
     usuarioNome: item.usuario_nome ?? "",
     area: item.area_nome ?? "",
     equipamento: item.equipamento_nome ?? "",
+    requisicao: item.requisicao ?? undefined,
     observacao: item.observacao ?? undefined,
     movementType: item.movement_type,
     partnerName: item.partner_name ?? undefined,
@@ -358,6 +360,7 @@ export function FuelDataProvider({ children }: PropsWithChildren) {
           usuarioNome: exit.usuarioNome,
           areaNome: exit.area,
           equipamentoNome: exit.equipamento,
+          requisicao: exit.requisicao,
           observacao: exit.observacao,
           movementType: exit.movementType,
           partnerName: exit.partnerName,
@@ -377,6 +380,7 @@ export function FuelDataProvider({ children }: PropsWithChildren) {
           usuarioNome: exit.usuarioNome,
           areaNome: exit.area,
           equipamentoNome: exit.equipamento,
+          requisicao: exit.requisicao,
           observacao: exit.observacao,
           movementType: exit.movementType,
           partnerName: exit.partnerName,
@@ -416,3 +420,4 @@ export function useFuelData() {
   if (!context) throw new Error("useFuelData must be used within FuelDataProvider");
   return context;
 }
+

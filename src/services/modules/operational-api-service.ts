@@ -1,4 +1,4 @@
-import { env } from "@/lib/config/env";
+﻿import { env } from "@/lib/config/env";
 import type { AppRole } from "@/contexts/auth/AuthContext";
 
 export interface ApiActor {
@@ -30,6 +30,7 @@ export interface RemoteExitRecord {
   usuario_nome?: string;
   area_nome?: string;
   equipamento_nome?: string;
+  requisicao?: string;
   observacao?: string;
   movement_type: "regular" | "loan_out" | "return_out";
   partner_name?: string;
@@ -109,3 +110,4 @@ export function cancelEntradaApi(actor: ApiActor, id: string, reason: string) {
 export function cancelSaidaApi(actor: ApiActor, id: string, reason: string) {
   return request(`/api/saidas/${id}/cancel`, actor, { method: "PATCH", body: JSON.stringify({ reason }) });
 }
+
