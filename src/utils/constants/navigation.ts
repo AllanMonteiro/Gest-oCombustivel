@@ -1,11 +1,13 @@
-﻿import {
+import {
   BarChart3,
   ClipboardList,
   Droplets,
   Fuel,
+  Gauge,
   Handshake,
   LayoutDashboard,
   Map,
+  Package,
   Settings,
   Truck,
   Users,
@@ -14,10 +16,22 @@ import type { NavigationItem } from "@/types/app-shell";
 
 export const primaryNavigation: NavigationItem[] = [
   {
-    label: "Dashboard",
+    label: "Dashboard geral",
     href: "/",
     icon: LayoutDashboard,
     description: "Indicadores gerenciais e consumo consolidado",
+  },
+  {
+    label: "Dashboard combustivel",
+    href: "/dashboard/combustivel",
+    icon: Fuel,
+    description: "Saldo, consumo e custo operacional de combustivel",
+  },
+  {
+    label: "Dashboard equipamentos",
+    href: "/dashboard/equipamentos",
+    icon: Gauge,
+    description: "Uso e custo por equipamento com combustivel e produtos",
   },
   {
     label: "Entradas",
@@ -36,6 +50,12 @@ export const primaryNavigation: NavigationItem[] = [
     href: "/emprestimos",
     icon: Handshake,
     description: "Movimentacoes com parceiros somando ou reduzindo saldo",
+  },
+  {
+    label: "Estoque geral",
+    href: "/estoque-geral",
+    icon: Package,
+    description: "Controle de pecas, movelaria e materiais distribuidos por area",
   },
   {
     label: "Relatorios",
@@ -57,6 +77,12 @@ export const registryNavigation: NavigationItem[] = [
     href: "/cadastros/combustiveis",
     icon: ClipboardList,
     description: "Tipos de combustivel e codigos internos",
+  },
+  {
+    label: "Produtos",
+    href: "/cadastros/produtos",
+    icon: Package,
+    description: "Cadastro de itens gerais para controle de estoque",
   },
   {
     label: "Areas",

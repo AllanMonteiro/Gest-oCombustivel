@@ -1,13 +1,17 @@
-﻿import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import { AdminLayout } from "@/layouts/admin/admin-layout";
 import { LoginPage } from "@/pages/auth/login-page";
 import { AreasPage } from "@/pages/cadastros/areas/areas-page";
 import { CombustiveisPage } from "@/pages/cadastros/combustiveis/combustiveis-page";
 import { EquipamentosPage } from "@/pages/cadastros/equipamentos/equipamentos-page";
+import { ProdutosPage } from "@/pages/cadastros/produtos/produtos-page";
 import { UsuariosPage } from "@/pages/cadastros/usuarios/usuarios-page";
 import { EmailSummarySettingsPage } from "@/pages/configuracoes/email/email-summary-settings-page";
+import { DashboardCombustivelPage } from "@/pages/dashboard/dashboard-combustivel-page";
+import { DashboardEquipamentosPage } from "@/pages/dashboard/dashboard-equipamentos-page";
 import { DashboardPage } from "@/pages/dashboard/dashboard-page";
 import { EmprestimosPage } from "@/pages/emprestimos/emprestimos-page";
+import { EstoqueGeralPage } from "@/pages/estoque-geral/estoque-geral-page";
 import { NotFoundPage } from "@/pages/errors/not-found-page";
 import { UnauthorizedPage } from "@/pages/errors/unauthorized-page";
 import { EntradasPage } from "@/pages/entradas/entradas-page";
@@ -36,6 +40,22 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: "/dashboard/combustivel",
+        element: (
+          <AdminLayout>
+            <DashboardCombustivelPage />
+          </AdminLayout>
+        ),
+      },
+      {
+        path: "/dashboard/equipamentos",
+        element: (
+          <AdminLayout>
+            <DashboardEquipamentosPage />
+          </AdminLayout>
+        ),
+      },
+      {
         path: "/entradas",
         element: (
           <AdminLayout>
@@ -56,6 +76,14 @@ export const router = createBrowserRouter([
         element: (
           <AdminLayout>
             <EmprestimosPage />
+          </AdminLayout>
+        ),
+      },
+      {
+        path: "/estoque-geral",
+        element: (
+          <AdminLayout>
+            <EstoqueGeralPage />
           </AdminLayout>
         ),
       },
@@ -84,6 +112,14 @@ export const router = createBrowserRouter([
         element: (
           <AdminLayout>
             <CombustiveisPage />
+          </AdminLayout>
+        ),
+      },
+      {
+        path: "/cadastros/produtos",
+        element: (
+          <AdminLayout>
+            <ProdutosPage />
           </AdminLayout>
         ),
       },
