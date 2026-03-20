@@ -1,4 +1,4 @@
-﻿import {
+import {
   createContext,
   type PropsWithChildren,
   useContext,
@@ -16,7 +16,6 @@ import {
   fetchOperationalState,
   updateEntradaApi,
   updateSaidaApi,
-  type ApiActor,
   type RemoteEntryRecord,
   type RemoteExitRecord,
 } from "@/services/modules/operational-api-service";
@@ -238,18 +237,14 @@ function toLocalExit(item: RemoteExitRecord): FuelExitRecord {
 }
 
 export function FuelDataProvider({ children }: PropsWithChildren) {
-  const { isAuthenticated, profile } = useAuth();
+  const { isAuthenticated, profile, session } = useAuth();
   const [entries, setEntries] = useState<FuelEntryRecord[]>(initialEntries);
   const [exits, setExits] = useState<FuelExitRecord[]>(initialExits);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
 
-  const actor = useMemo<ApiActor | null>(() => {
-    if (!profile) return null;
-    return { id: profile.id, nome: profile.nome, role: profile.role };
-  }, [profile]);
-
-  const isRemoteMode = hasApiConfig && isAuthenticated && Boolean(actor);
+  const token = session?.access_token;
+  const isRemoteMode = hasApiConfig && isAuthenticated && Boolean(token);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -271,11 +266,11 @@ export function FuelDataProvider({ children }: PropsWithChildren) {
   }, [entries, exits]);
 
   const reloadData = async () => {
-    if (!actor || !isRemoteMode) return;
+    if (!token || !isRemoteMode) return;
     setIsSyncing(true);
     setSyncError(null);
     try {
-      const state = await fetchOperationalState(actor);
+      const state = await fetchOperationalState(token);
       setEntries(state.entries.map(toLocalEntry));
       setExits(state.exits.map(toLocalExit));
     } catch (error) {
@@ -288,7 +283,7 @@ export function FuelDataProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     if (!isRemoteMode) return;
     void reloadData();
-  }, [isRemoteMode, actor?.id]);
+  }, [isRemoteMode, token]);
 
   const stockByFuel = useMemo(() => buildStock(entries, exits), [entries, exits]);
   const partnerBalances = useMemo(() => buildPartnerBalances(entries, exits), [entries, exits]);
@@ -314,8 +309,8 @@ export function FuelDataProvider({ children }: PropsWithChildren) {
     isSyncing,
     syncError,
     addEntry: async (entry) => {
-      if (isRemoteMode && actor) {
-        await createEntradaApi(actor, {
+      if (isRemoteMode && token) {
+        await createEntradaApi(token, {
           data: entry.data,
           fornecedor: entry.fornecedor,
           combustivel: entry.combustivel,
@@ -333,8 +328,8 @@ export function FuelDataProvider({ children }: PropsWithChildren) {
       setEntries((current) => [{ ...entry, id: createId("ent"), status: "active" }, ...current]);
     },
     updateEntry: async (id, entry) => {
-      if (isRemoteMode && actor) {
-        await updateEntradaApi(actor, id, {
+      if (isRemoteMode && token) {
+        await updateEntradaApi(token, id, {
           data: entry.data,
           fornecedor: entry.fornecedor,
           combustivel: entry.combustivel,
@@ -352,8 +347,8 @@ export function FuelDataProvider({ children }: PropsWithChildren) {
       setEntries((current) => current.map((item) => item.id === id ? { ...item, ...entry } : item));
     },
     addExit: async (exit) => {
-      if (isRemoteMode && actor) {
-        await createSaidaApi(actor, {
+      if (isRemoteMode && token) {
+        await createSaidaApi(token, {
           data: exit.data,
           combustivel: exit.combustivel,
           litros: exit.litros,
@@ -372,8 +367,8 @@ export function FuelDataProvider({ children }: PropsWithChildren) {
       setExits((current) => [{ ...exit, id: createId("sai"), status: "active" }, ...current]);
     },
     updateExit: async (id, exit) => {
-      if (isRemoteMode && actor) {
-        await updateSaidaApi(actor, id, {
+      if (isRemoteMode && token) {
+        await updateSaidaApi(token, id, {
           data: exit.data,
           combustivel: exit.combustivel,
           litros: exit.litros,
@@ -392,8 +387,8 @@ export function FuelDataProvider({ children }: PropsWithChildren) {
       setExits((current) => current.map((item) => item.id === id ? { ...item, ...exit } : item));
     },
     cancelEntry: async (id, reason) => {
-      if (isRemoteMode && actor) {
-        await cancelEntradaApi(actor, id, reason);
+      if (isRemoteMode && token) {
+        await cancelEntradaApi(token, id, reason);
         await reloadData();
         return;
       }
@@ -401,8 +396,8 @@ export function FuelDataProvider({ children }: PropsWithChildren) {
       setEntries((current) => current.map((item) => item.id === id ? { ...item, status: "cancelled", cancellationReason: reason, cancelledAt: new Date().toISOString() } : item));
     },
     cancelExit: async (id, reason) => {
-      if (isRemoteMode && actor) {
-        await cancelSaidaApi(actor, id, reason);
+      if (isRemoteMode && token) {
+        await cancelSaidaApi(token, id, reason);
         await reloadData();
         return;
       }
@@ -410,7 +405,7 @@ export function FuelDataProvider({ children }: PropsWithChildren) {
       setExits((current) => current.map((item) => item.id === id ? { ...item, status: "cancelled", cancellationReason: reason, cancelledAt: new Date().toISOString() } : item));
     },
     reloadData,
-  }), [entries, exits, stockByFuel, partnerBalances, totalStockLiters, totalExitLiters, totalEstimatedValue, totalLoanInLiters, totalLoanOutLiters, totalOwedLiters, isRemoteMode, isSyncing, syncError, actor]);
+  }), [entries, exits, stockByFuel, partnerBalances, totalStockLiters, totalExitLiters, totalEstimatedValue, totalLoanInLiters, totalLoanOutLiters, totalOwedLiters, isRemoteMode, isSyncing, syncError, token]);
 
   return <FuelDataContext.Provider value={value}>{children}</FuelDataContext.Provider>;
 }

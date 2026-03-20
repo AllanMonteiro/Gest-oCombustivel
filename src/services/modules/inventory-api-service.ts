@@ -1,4 +1,4 @@
-﻿import { env } from "@/lib/config/env";
+import { env } from "@/lib/config/env";
 import type { AppRole } from "@/contexts/auth/AuthContext";
 
 export interface InventoryApiActor {
@@ -69,20 +69,18 @@ function joinUrl(path: string) {
   return `${env.apiBaseUrl.replace(/\/$/, "")}${path}`;
 }
 
-function buildHeaders(actor: InventoryApiActor) {
+function buildHeaders(token: string) {
   return {
     "Content-Type": "application/json",
-    "x-user-id": actor.id,
-    "x-user-name": actor.nome,
-    "x-user-role": actor.role,
+    "Authorization": `Bearer ${token}`,
   };
 }
 
-async function request<T>(path: string, actor: InventoryApiActor, init?: RequestInit) {
+async function request<T>(path: string, token: string, init?: RequestInit) {
   const response = await fetch(joinUrl(path), {
     ...init,
     headers: {
-      ...buildHeaders(actor),
+      ...buildHeaders(token),
       ...(init?.headers ?? {}),
     },
   });
@@ -99,18 +97,18 @@ async function request<T>(path: string, actor: InventoryApiActor, init?: Request
   return undefined as T;
 }
 
-export function fetchInventoryState(actor: InventoryApiActor) {
-  return request<InventoryStateResponse>("/api/inventario/state", actor, { method: "GET" });
+export function fetchInventoryState(token: string) {
+  return request<InventoryStateResponse>("/api/inventario/state", token, { method: "GET" });
 }
 
-export function createInventoryProductApi(actor: InventoryApiActor, payload: Record<string, unknown>) {
-  return request("/api/inventario/produtos", actor, { method: "POST", body: JSON.stringify(payload) });
+export function createInventoryProductApi(token: string, payload: Record<string, unknown>) {
+  return request("/api/inventario/produtos", token, { method: "POST", body: JSON.stringify(payload) });
 }
 
-export function createInventoryEntryApi(actor: InventoryApiActor, payload: Record<string, unknown>) {
-  return request("/api/inventario/entradas", actor, { method: "POST", body: JSON.stringify(payload) });
+export function createInventoryEntryApi(token: string, payload: Record<string, unknown>) {
+  return request("/api/inventario/entradas", token, { method: "POST", body: JSON.stringify(payload) });
 }
 
-export function createInventoryExitApi(actor: InventoryApiActor, payload: Record<string, unknown>) {
-  return request("/api/inventario/saidas", actor, { method: "POST", body: JSON.stringify(payload) });
+export function createInventoryExitApi(token: string, payload: Record<string, unknown>) {
+  return request("/api/inventario/saidas", token, { method: "POST", body: JSON.stringify(payload) });
 }

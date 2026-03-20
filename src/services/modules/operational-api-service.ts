@@ -1,4 +1,4 @@
-﻿import { env } from "@/lib/config/env";
+import { env } from "@/lib/config/env";
 import type { AppRole } from "@/contexts/auth/AuthContext";
 
 export interface ApiActor {
@@ -53,20 +53,18 @@ function joinUrl(path: string) {
   return `${env.apiBaseUrl.replace(/\/$/, "")}${path}`;
 }
 
-function buildHeaders(actor: ApiActor) {
+function buildHeaders(token: string) {
   return {
     "Content-Type": "application/json",
-    "x-user-id": actor.id,
-    "x-user-name": actor.nome,
-    "x-user-role": actor.role,
+    "Authorization": `Bearer ${token}`,
   };
 }
 
-async function request<T>(path: string, actor: ApiActor, init?: RequestInit) {
+async function request<T>(path: string, token: string, init?: RequestInit) {
   const response = await fetch(joinUrl(path), {
     ...init,
     headers: {
-      ...buildHeaders(actor),
+      ...buildHeaders(token),
       ...(init?.headers ?? {}),
     },
   });
@@ -83,31 +81,31 @@ async function request<T>(path: string, actor: ApiActor, init?: RequestInit) {
   return undefined as T;
 }
 
-export function fetchOperationalState(actor: ApiActor) {
-  return request<OperationalStateResponse>("/api/state", actor, { method: "GET" });
+export function fetchOperationalState(token: string) {
+  return request<OperationalStateResponse>("/api/state", token, { method: "GET" });
 }
 
-export function createEntradaApi(actor: ApiActor, payload: Record<string, unknown>) {
-  return request("/api/entradas", actor, { method: "POST", body: JSON.stringify(payload) });
+export function createEntradaApi(token: string, payload: Record<string, unknown>) {
+  return request("/api/entradas", token, { method: "POST", body: JSON.stringify(payload) });
 }
 
-export function updateEntradaApi(actor: ApiActor, id: string, payload: Record<string, unknown>) {
-  return request(`/api/entradas/${id}`, actor, { method: "PATCH", body: JSON.stringify(payload) });
+export function updateEntradaApi(token: string, id: string, payload: Record<string, unknown>) {
+  return request(`/api/entradas/${id}`, token, { method: "PATCH", body: JSON.stringify(payload) });
 }
 
-export function createSaidaApi(actor: ApiActor, payload: Record<string, unknown>) {
-  return request("/api/saidas", actor, { method: "POST", body: JSON.stringify(payload) });
+export function createSaidaApi(token: string, payload: Record<string, unknown>) {
+  return request("/api/saidas", token, { method: "POST", body: JSON.stringify(payload) });
 }
 
-export function updateSaidaApi(actor: ApiActor, id: string, payload: Record<string, unknown>) {
-  return request(`/api/saidas/${id}`, actor, { method: "PATCH", body: JSON.stringify(payload) });
+export function updateSaidaApi(token: string, id: string, payload: Record<string, unknown>) {
+  return request(`/api/saidas/${id}`, token, { method: "PATCH", body: JSON.stringify(payload) });
 }
 
-export function cancelEntradaApi(actor: ApiActor, id: string, reason: string) {
-  return request(`/api/entradas/${id}/cancel`, actor, { method: "PATCH", body: JSON.stringify({ reason }) });
+export function cancelEntradaApi(token: string, id: string, reason: string) {
+  return request(`/api/entradas/${id}/cancel`, token, { method: "PATCH", body: JSON.stringify({ reason }) });
 }
 
-export function cancelSaidaApi(actor: ApiActor, id: string, reason: string) {
-  return request(`/api/saidas/${id}/cancel`, actor, { method: "PATCH", body: JSON.stringify({ reason }) });
+export function cancelSaidaApi(token: string, id: string, reason: string) {
+  return request(`/api/saidas/${id}/cancel`, token, { method: "PATCH", body: JSON.stringify({ reason }) });
 }
 

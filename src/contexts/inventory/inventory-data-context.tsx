@@ -1,4 +1,4 @@
-﻿import {
+import {
   createContext,
   type PropsWithChildren,
   useContext,
@@ -13,7 +13,6 @@ import {
   createInventoryExitApi,
   createInventoryProductApi,
   fetchInventoryState,
-  type InventoryApiActor,
   type RemoteInventoryEntry,
   type RemoteInventoryExit,
   type RemoteInventoryProduct,
@@ -375,7 +374,7 @@ function toLocalStock(item: RemoteInventoryStockItem): InventoryStockItem {
 }
 
 export function InventoryDataProvider({ children }: PropsWithChildren) {
-  const { isAuthenticated, profile } = useAuth();
+  const { isAuthenticated, profile, session } = useAuth();
   const [products, setProducts] = useState<InventoryProduct[]>(initialProducts);
   const [entries, setEntries] = useState<InventoryEntryRecord[]>(initialEntries);
   const [exits, setExits] = useState<InventoryExitRecord[]>(initialExits);
@@ -383,12 +382,8 @@ export function InventoryDataProvider({ children }: PropsWithChildren) {
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
 
-  const actor = useMemo<InventoryApiActor | null>(() => {
-    if (!profile) return null;
-    return { id: profile.id, nome: profile.nome, role: profile.role };
-  }, [profile]);
-
-  const isRemoteMode = hasApiConfig && isAuthenticated && Boolean(actor);
+  const token = session?.access_token;
+  const isRemoteMode = hasApiConfig && isAuthenticated && Boolean(token);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -411,11 +406,11 @@ export function InventoryDataProvider({ children }: PropsWithChildren) {
   }, [products, entries, exits]);
 
   const reloadData = async () => {
-    if (!actor || !isRemoteMode) return;
+    if (!token || !isRemoteMode) return;
     setIsSyncing(true);
     setSyncError(null);
     try {
-      const state = await fetchInventoryState(actor);
+      const state = await fetchInventoryState(token);
       setProducts(state.products.map(toLocalProduct));
       setEntries(state.entries.map(toLocalEntry));
       setExits(state.exits.map(toLocalExit));
@@ -430,7 +425,7 @@ export function InventoryDataProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     if (!isRemoteMode) return;
     void reloadData();
-  }, [isRemoteMode, actor?.id]);
+  }, [isRemoteMode, token]);
 
   const localStock = useMemo(() => buildStock(products, entries, exits), [products, entries, exits]);
   const stock = useMemo(() => (isRemoteMode ? remoteStock : localStock), [isRemoteMode, remoteStock, localStock]);
@@ -450,8 +445,8 @@ export function InventoryDataProvider({ children }: PropsWithChildren) {
     isSyncing,
     syncError,
     addProduct: async (product) => {
-      if (isRemoteMode && actor) {
-        await createInventoryProductApi(actor, {
+      if (isRemoteMode && token) {
+        await createInventoryProductApi(token, {
           nome: product.nome,
           categoria: product.categoria,
           unidade: product.unidade,
@@ -474,8 +469,8 @@ export function InventoryDataProvider({ children }: PropsWithChildren) {
       ]);
     },
     addEntry: async (entry) => {
-      if (isRemoteMode && actor) {
-        await createInventoryEntryApi(actor, {
+      if (isRemoteMode && token) {
+        await createInventoryEntryApi(token, {
           data: entry.data,
           produtoId: entry.produtoId,
           quantidade: entry.quantidade,
@@ -498,8 +493,8 @@ export function InventoryDataProvider({ children }: PropsWithChildren) {
       ]);
     },
     addExit: async (exit) => {
-      if (isRemoteMode && actor) {
-        await createInventoryExitApi(actor, {
+      if (isRemoteMode && token) {
+        await createInventoryExitApi(token, {
           data: exit.data,
           produtoId: exit.produtoId,
           quantidade: exit.quantidade,
@@ -524,7 +519,7 @@ export function InventoryDataProvider({ children }: PropsWithChildren) {
     },
     getProductById: (productId) => products.find((product) => product.id === productId),
     reloadData,
-  }), [products, entries, exits, stock, areaSummaries, totalItemsInStock, totalInventoryValue, isRemoteMode, isSyncing, syncError, actor]);
+  }), [products, entries, exits, stock, areaSummaries, totalItemsInStock, totalInventoryValue, isRemoteMode, isSyncing, syncError, token]);
 
   return <InventoryDataContext.Provider value={value}>{children}</InventoryDataContext.Provider>;
 }
