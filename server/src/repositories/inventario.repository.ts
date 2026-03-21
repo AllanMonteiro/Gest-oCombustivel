@@ -1,4 +1,4 @@
-﻿import { supabaseAdmin } from "../config/supabase.js";
+import { supabaseAdmin } from "../config/supabase.js";
 import type { CreateInventoryEntryInput, CreateInventoryExitInput, CreateInventoryProductInput } from "../schemas/inventario.schema.js";
 import { HttpError } from "../utils/http-error.js";
 
@@ -156,3 +156,62 @@ export async function createInventoryExitData(payload: CreateInventoryExitInput,
 
   return data;
 }
+
+export async function deleteInventoryEntryData(id: string, actorId: string, actorName: string) {
+  const { data: entry, error: fetchError } = await supabaseAdmin
+    .from("entradas_produtos")
+    .select("produto_id")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (fetchError) throw new HttpError(500, fetchError.message, fetchError);
+  if (!entry) throw new HttpError(404, "Entrada nao encontrada.");
+
+  const { error: deleteError } = await supabaseAdmin
+    .from("entradas_produtos")
+    .delete()
+    .eq("id", id);
+
+  if (deleteError) throw new HttpError(400, deleteError.message, deleteError);
+
+  await supabaseAdmin.rpc("recalculate_product_stock", { p_produto_id: entry.produto_id });
+  await supabaseAdmin.rpc("insert_audit_log", {
+    p_acao: "delete",
+    p_entidade: "entrada_produto",
+    p_entidade_id: id,
+    p_dados_anteriores: entry,
+    p_dados_novos: null,
+    p_usuario_id: actorId,
+    p_usuario_nome: actorName,
+  });
+}
+
+export async function deleteInventoryExitData(id: string, actorId: string, actorName: string) {
+  const { data: exit, error: fetchError } = await supabaseAdmin
+    .from("saidas_produtos")
+    .select("produto_id")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (fetchError) throw new HttpError(500, fetchError.message, fetchError);
+  if (!exit) throw new HttpError(404, "Saida nao encontrada.");
+
+  const { error: deleteError } = await supabaseAdmin
+    .from("saidas_produtos")
+    .delete()
+    .eq("id", id);
+
+  if (deleteError) throw new HttpError(400, deleteError.message, deleteError);
+
+  await supabaseAdmin.rpc("recalculate_product_stock", { p_produto_id: exit.produto_id });
+  await supabaseAdmin.rpc("insert_audit_log", {
+    p_acao: "delete",
+    p_entidade: "saida_produto",
+    p_entidade_id: id,
+    p_dados_anteriores: exit,
+    p_dados_novos: null,
+    p_usuario_id: actorId,
+    p_usuario_nome: actorName,
+  });
+}
+

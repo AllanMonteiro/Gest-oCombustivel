@@ -3,6 +3,6 @@ import { createApp } from "./app.js";
 
 const app = createApp();
 
-app.listen(env.PORT, () => {
-  console.log(`API de combustivel pronta em http://localhost:${env.PORT}`);
+app.listen(env.PORT, "0.0.0.0", () => {
+  console.log(`API de combustivel pronta em http://0.0.0.0:${env.PORT}`);
 });

@@ -1,4 +1,4 @@
-﻿import { Bell, LogOut, Search } from "lucide-react";
+import { Bell, LogOut, Search } from "lucide-react";
 import type { PropsWithChildren } from "react";
 import { NavLink } from "react-router-dom";
 import { AppLogo } from "@/components/shared/app-logo";
@@ -57,7 +57,7 @@ export function AdminLayout({ children }: PropsWithChildren) {
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-accent">Painel administrativo</p>
-                <h2 className="mt-2 text-xl font-semibold text-foreground">Gestao de combustiveis, produtos gerais e estoque consolidado</h2>
+                <h2 className="mt-2 text-xl font-semibold text-foreground">Controle de Estoque e Combustível</h2>
               </div>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <label className="flex min-w-[280px] items-center gap-3 rounded-2xl border border-border bg-white px-4 py-3 shadow-sm">

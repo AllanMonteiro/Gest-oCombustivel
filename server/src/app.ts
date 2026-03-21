@@ -8,8 +8,8 @@ import { apiRouter } from "./routes/index.js";
 const corsOptions = {
   origin: true,
   credentials: true,
-  methods: ["GET", "POST", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "x-user-id", "x-user-name", "x-user-role"],
+  methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "x-user-id", "x-user-name", "x-user-role"],
 };
 
 export function createApp() {

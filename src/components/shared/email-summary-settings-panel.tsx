@@ -1,4 +1,5 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/contexts/auth/AuthContext";
 import { CheckCircle2, Clock3, Mail, RefreshCcw, Save, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +14,7 @@ import {
 } from "@/services/modules/email-summary-service";
 
 const STORAGE_KEY = "fuel-summary-email-ui-settings-v1";
-const DEFAULT_BASE_URL = "https://southamerica-east1-seu-projeto.cloudfunctions.net";
+const DEFAULT_BASE_URL = `${import.meta.env.VITE_API_BASE_URL || "http://localhost:3336"}/api/email-summary`;
 
 interface LocalConnectionState {
   baseUrl: string;
@@ -42,6 +43,7 @@ function frequencyDescription(frequency: EmailSummaryFrequency) {
 }
 
 export function EmailSummarySettingsPanel({ compact = false }: { compact?: boolean }) {
+  const { session } = useAuth();
   const [connection, setConnection] = useState<LocalConnectionState>({ baseUrl: DEFAULT_BASE_URL, adminToken: "" });
   const [enabled, setEnabled] = useState("true");
   const [scheduleLabel, setScheduleLabel] = useState("07:00");
@@ -78,9 +80,11 @@ export function EmailSummarySettingsPanel({ compact = false }: { compact?: boole
   };
 
   const requireConnection = () => {
-    if (!connection.baseUrl.trim() || !connection.adminToken.trim()) {
-      throw new Error("Preencha a URL base das functions e o token administrativo.");
+    const finalToken = connection.adminToken || session?.access_token;
+    if (!connection.baseUrl.trim() || !finalToken) {
+      throw new Error("Preencha a URL base das functions ou faca login para usar o token administrativo.");
     }
+    return { ...connection, adminToken: finalToken };
   };
 
   const handleLoad = async () => {
@@ -88,8 +92,8 @@ export function EmailSummarySettingsPanel({ compact = false }: { compact?: boole
     setMessage(null);
     setError(null);
     try {
-      requireConnection();
-      const settings = await fetchEmailSummarySettings(connection);
+      const conn = requireConnection();
+      const settings = await fetchEmailSummarySettings(conn);
       applyRemoteSettings(settings);
       setMessage("Configuracao carregada do backend com sucesso.");
     } catch (caughtError) {
@@ -104,15 +108,17 @@ export function EmailSummarySettingsPanel({ compact = false }: { compact?: boole
     setMessage(null);
     setError(null);
     try {
-      requireConnection();
-      const response = await saveEmailSummarySettings(connection, {
+      const conn = requireConnection();
+      await saveEmailSummarySettings(conn, {
         enabled: enabled === "true",
         recipients: recipientsPreview,
         scheduleLabel: scheduleLabel.trim() || "07:00",
         frequency,
         updatedAtIso,
       });
-      applyRemoteSettings(response.settings);
+      // Recarregar os dados para confirmar o salvamento real
+      const refreshed = await fetchEmailSummarySettings(conn);
+      applyRemoteSettings(refreshed);
       setMessage("Destinatarios e configuracoes salvos no backend.");
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Falha ao salvar configuracao.");
@@ -126,8 +132,8 @@ export function EmailSummarySettingsPanel({ compact = false }: { compact?: boole
     setMessage(null);
     setError(null);
     try {
-      requireConnection();
-      const response = await sendEmailSummaryTest(connection);
+      const conn = requireConnection();
+      const response = await sendEmailSummaryTest(conn);
       setMessage(`Email de teste enviado para ${response.recipients.join(", ")}.`);
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Falha ao disparar email de teste.");

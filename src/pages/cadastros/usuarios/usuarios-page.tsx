@@ -1,4 +1,4 @@
-﻿import { zodResolver } from "@hookform/resolvers/zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { FormField } from "@/components/forms/form-field";
@@ -7,6 +7,9 @@ import { SectionCard } from "@/components/shared/section-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { useAuth } from "@/contexts/auth/AuthContext";
+import { createProfileApi } from "@/services/modules/inventory-api-service";
+import { useState } from "react";
 
 const schema = z.object({
   nome: z.string().min(2, "Informe o nome"),
@@ -18,16 +21,40 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export function UsuariosPage() {
+  const { session } = useAuth();
+  const [message, setMessage] = useState("");
+  const [saving, setSaving] = useState(false);
+
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { nome: "", email: "", role: "", ativo: "true" },
   });
 
+  const onSubmit = async (data: FormData) => {
+    if (!session?.access_token) return;
+    setSaving(true);
+    setMessage("");
+    try {
+      await createProfileApi(session.access_token, {
+        nome: data.nome,
+        email: data.email,
+        role: data.role,
+        ativo: data.ativo === "true",
+      });
+      setMessage("Usuario cadastrado com sucesso!");
+      form.reset();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Erro ao cadastrar usuario.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <PageHeader eyebrow="Cadastros" title="Usuarios e perfis" description="Cadastro inicial de usuarios com definicao de papel administrativo." actions={<Button type="submit" form="usuario-form">Salvar usuario</Button>} />
+      <PageHeader eyebrow="Cadastros" title="Usuarios e perfis" description="Cadastro inicial de usuarios com definicao de papel administrativo." actions={<Button type="submit" form="usuario-form" disabled={saving}>{saving ? "Salvando..." : "Salvar usuario"}</Button>} />
       <SectionCard title="Novo usuario">
-        <form id="usuario-form" className="grid gap-4 md:grid-cols-2" onSubmit={form.handleSubmit((data) => console.log(data))}>
+        <form id="usuario-form" className="grid gap-4 md:grid-cols-2" onSubmit={form.handleSubmit(onSubmit)}>
           <FormField label="Nome" error={form.formState.errors.nome?.message}>
             <Input placeholder="Maria Silva" {...form.register("nome")} />
           </FormField>
@@ -48,6 +75,7 @@ export function UsuariosPage() {
               <option value="false">Inativo</option>
             </Select>
           </FormField>
+          {message ? <div className={`md:col-span-2 px-4 py-3 rounded-2xl text-sm ${message.includes("Erro") ? "bg-amber-50 text-amber-800 border border-amber-200" : "bg-emerald-50 text-emerald-800 border border-emerald-200"}`}>{message}</div> : null}
         </form>
       </SectionCard>
     </div>

@@ -77,7 +77,9 @@ function buildHeaders(token: string) {
 }
 
 async function request<T>(path: string, token: string, init?: RequestInit) {
-  const response = await fetch(joinUrl(path), {
+  const url = joinUrl(path);
+  console.log(`[CORTEX] Chamando API em: ${url} (${init?.method ?? "GET"})`);
+  const response = await fetch(url, {
     ...init,
     headers: {
       ...buildHeaders(token),
@@ -111,4 +113,44 @@ export function createInventoryEntryApi(token: string, payload: Record<string, u
 
 export function createInventoryExitApi(token: string, payload: Record<string, unknown>) {
   return request("/api/inventario/saidas", token, { method: "POST", body: JSON.stringify(payload) });
+}
+
+export function deleteInventoryEntryApi(token: string, id: string) {
+  return request(`/api/inventario/entradas/${id}`, token, { method: "DELETE" });
+}
+
+export function deleteInventoryExitApi(token: string, id: string) {
+  return request(`/api/inventario/saidas/${id}`, token, { method: "DELETE" });
+}
+
+export function createAreaApi(token: string, payload: Record<string, unknown>) {
+  return request("/api/areas", token, { method: "POST", body: JSON.stringify(payload) });
+}
+
+export function fetchAreasApi(token: string) {
+  return request<any[]>("/api/areas", token, { method: "GET" });
+}
+
+export function createEquipamentoApi(token: string, payload: Record<string, unknown>) {
+  return request("/api/equipamentos", token, { method: "POST", body: JSON.stringify(payload) });
+}
+
+export function fetchEquipamentosApi(token: string) {
+  return request<any[]>("/api/equipamentos", token, { method: "GET" });
+}
+
+export function createProfileApi(token: string, payload: Record<string, unknown>) {
+  return request("/api/profiles", token, { method: "POST", body: JSON.stringify(payload) });
+}
+
+export function fetchProfilesApi(token: string) {
+  return request<any[]>("/api/profiles", token, { method: "GET" });
+}
+
+export function createCombustivelApi(token: string, payload: Record<string, unknown>) {
+  return request("/api/combustiveis", token, { method: "POST", body: JSON.stringify(payload) });
+}
+
+export function fetchCombustiveisApi(token: string) {
+  return request<any[]>("/api/combustiveis", token, { method: "GET" });
 }

@@ -1,4 +1,4 @@
-﻿export type EmailSummaryFrequency = "daily" | "weekly" | "monthly";
+export type EmailSummaryFrequency = "daily" | "weekly" | "monthly";
 
 export interface EmailSummaryApiSettings {
   enabled: boolean;
@@ -20,7 +20,7 @@ function joinUrl(baseUrl: string, endpoint: string) {
 function buildHeaders(token: string) {
   return {
     "Content-Type": "application/json",
-    "x-summary-token": token,
+    "Authorization": `Bearer ${token}`,
   };
 }
 

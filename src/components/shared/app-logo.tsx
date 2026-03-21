@@ -1,4 +1,4 @@
-﻿import { Flame } from "lucide-react";
+import { Flame } from "lucide-react";
 
 export function AppLogo() {
   return (
@@ -11,7 +11,7 @@ export function AppLogo() {
           ERP Operacional
         </p>
         <h1 className="text-base font-semibold text-sidebar-foreground">
-          Controle de Combustivel
+          Controle de Estoque e Combustível
         </h1>
       </div>
     </div>

@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { useFuelData } from "@/contexts/fuel/fuel-data-context";
 import { useInventoryData } from "@/contexts/inventory/inventory-data-context";
+import { useAuth } from "@/contexts/auth/AuthContext";
+import { useState } from "react";
 
 const schema = z.object({
   dataInicial: z.string().optional(),
@@ -64,6 +66,9 @@ function isWithinRange(date: string, start?: string, end?: string) {
 }
 
 export function RelatoriosPage() {
+  const { session } = useAuth();
+  const [saving, setSaving] = useState(false);
+  
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -241,7 +246,45 @@ export function RelatoriosPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader eyebrow="Analises" title="Relatorios gerenciais" description="Relatorio consolidado de custos por area e por equipamento, considerando combustivel e produtos gerais vinculados ao consumo operacional." />
+      <PageHeader
+        eyebrow="Analises"
+        title="Relatorios gerenciais"
+        description="Relatorio consolidado de custos por area e por equipamento, considerando combustivel e produtos gerais vinculados ao consumo operacional."
+        actions={(
+          <Button
+            variant="outline"
+            disabled={saving}
+            onClick={async () => {
+              if (!session?.access_token) return;
+              try {
+                setSaving(true);
+                const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
+                const response = await fetch(`${baseUrl}/api/relatorios/movimentacoes.csv`, {
+                  headers: {
+                    "Authorization": `Bearer ${session.access_token}`
+                  }
+                });
+                if (!response.ok) throw new Error("Erro ao gerar relatorio.");
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `relatorio-movimentacoes-${new Date().toISOString().split("T")[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+              } catch (err) {
+                console.error(err);
+              } finally {
+                setSaving(false);
+              }
+            }}
+          >
+            {saving ? "Gerando..." : "Exportar CSV"}
+          </Button>
+        )}
+      />
 
       <SectionCard title="Filtros do relatorio" description="Filtre por periodo, combustivel, area, equipamento, categoria, produto e usuario para recalcular os custos em tempo real.">
         <form id="relatorio-form" className="grid gap-x-4 gap-y-5 md:grid-cols-2 xl:grid-cols-4" onSubmit={form.handleSubmit(() => undefined)}>

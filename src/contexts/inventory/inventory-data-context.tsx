@@ -12,6 +12,8 @@ import {
   createInventoryEntryApi,
   createInventoryExitApi,
   createInventoryProductApi,
+  deleteInventoryEntryApi,
+  deleteInventoryExitApi,
   fetchInventoryState,
   type RemoteInventoryEntry,
   type RemoteInventoryExit,
@@ -95,7 +97,9 @@ interface InventoryDataContextValue {
   syncError: string | null;
   addProduct: (product: Omit<InventoryProduct, "id" | "createdAt">) => Promise<void>;
   addEntry: (entry: Omit<InventoryEntryRecord, "id" | "createdAt">) => Promise<void>;
+  deleteEntry: (id: string) => Promise<void>;
   addExit: (exit: Omit<InventoryExitRecord, "id" | "createdAt">) => Promise<void>;
+  deleteExit: (id: string) => Promise<void>;
   getProductById: (productId: string) => InventoryProduct | undefined;
   reloadData: () => Promise<void>;
 }
@@ -108,116 +112,10 @@ interface PersistedInventoryData {
 
 const STORAGE_KEY = "controle-combustivel-estoque-geral-v1";
 
-const initialProducts: InventoryProduct[] = [
-  {
-    id: "prod-rolamento-6205",
-    nome: "Rolamento 6205",
-    categoria: "Pecas",
-    unidade: "UN",
-    areaResponsavel: "Manutencao",
-    estoqueMinimo: 6,
-    descricao: "Reposicao para bombas e motores de apoio.",
-    ativo: true,
-    createdAt: "2026-03-10T08:00:00.000Z",
-  },
-  {
-    id: "prod-cadeira-caixa",
-    nome: "Cadeira operacional",
-    categoria: "Movelaria",
-    unidade: "UN",
-    areaResponsavel: "Administrativo",
-    estoqueMinimo: 2,
-    descricao: "Cadeira para postos administrativos e recepcao.",
-    ativo: true,
-    createdAt: "2026-03-10T08:10:00.000Z",
-  },
-  {
-    id: "prod-cabo-16mm",
-    nome: "Cabo flexivel 16mm",
-    categoria: "Material eletrico",
-    unidade: "M",
-    areaResponsavel: "Oficina",
-    estoqueMinimo: 30,
-    descricao: "Uso em manutencao de quadros e extensoes.",
-    ativo: true,
-    createdAt: "2026-03-10T08:20:00.000Z",
-  },
-];
+const initialProducts: InventoryProduct[] = [];
+const initialEntries: InventoryEntryRecord[] = [];
+const initialExits: InventoryExitRecord[] = [];
 
-const initialEntries: InventoryEntryRecord[] = [
-  {
-    id: "ent-geral-1",
-    data: "2026-03-11",
-    produtoId: "prod-rolamento-6205",
-    quantidade: 18,
-    custoUnitario: 42.5,
-    fornecedor: "Casa das Pecas",
-    notaFiscal: "NF-9812",
-    observacao: "Compra para manutencao preventiva.",
-    createdAt: "2026-03-11T10:00:00.000Z",
-  },
-  {
-    id: "ent-geral-2",
-    data: "2026-03-12",
-    produtoId: "prod-cadeira-caixa",
-    quantidade: 6,
-    custoUnitario: 389.9,
-    fornecedor: "Moveis Forte",
-    notaFiscal: "NF-5521",
-    observacao: "Reposicao do escritorio principal.",
-    createdAt: "2026-03-12T14:00:00.000Z",
-  },
-  {
-    id: "ent-geral-3",
-    data: "2026-03-13",
-    produtoId: "prod-cabo-16mm",
-    quantidade: 120,
-    custoUnitario: 12.4,
-    fornecedor: "Eletrica Sertao",
-    notaFiscal: "NF-2041",
-    observacao: "Material para servicos de campo.",
-    createdAt: "2026-03-13T11:30:00.000Z",
-  },
-];
-
-const initialExits: InventoryExitRecord[] = [
-  {
-    id: "sai-geral-1",
-    data: "2026-03-14",
-    produtoId: "prod-rolamento-6205",
-    quantidade: 4,
-    area: "Manutencao",
-    equipamento: "Bomba 01",
-    solicitante: "Equipe Oficina",
-    aplicacao: "Troca em bomba de transferencia",
-    observacao: "Atendimento OS-142.",
-    createdAt: "2026-03-14T09:15:00.000Z",
-  },
-  {
-    id: "sai-geral-2",
-    data: "2026-03-15",
-    produtoId: "prod-cadeira-caixa",
-    quantidade: 2,
-    area: "Administrativo",
-    equipamento: "Recepcao principal",
-    solicitante: "Recepcao",
-    aplicacao: "Substituicao de mobiliario",
-    observacao: "Nova sala de atendimento.",
-    createdAt: "2026-03-15T13:10:00.000Z",
-  },
-  {
-    id: "sai-geral-3",
-    data: "2026-03-16",
-    produtoId: "prod-cabo-16mm",
-    quantidade: 35,
-    area: "Operacao de Campo",
-    equipamento: "Painel Campo Norte",
-    solicitante: "Equipe Campo Norte",
-    aplicacao: "Adequacao de alimentacao eletrica",
-    observacao: "Trecho remoto.",
-    createdAt: "2026-03-16T16:40:00.000Z",
-  },
-];
 
 const InventoryDataContext = createContext<InventoryDataContextValue | null>(null);
 
@@ -428,7 +326,36 @@ export function InventoryDataProvider({ children }: PropsWithChildren) {
   }, [isRemoteMode, token]);
 
   const localStock = useMemo(() => buildStock(products, entries, exits), [products, entries, exits]);
-  const stock = useMemo(() => (isRemoteMode ? remoteStock : localStock), [isRemoteMode, remoteStock, localStock]);
+  const stock = useMemo(() => {
+    if (!isRemoteMode) return localStock;
+    
+    // No modo remoto, garantimos que TODOS os produtos ativos aparecam,
+    // mesmo que nao estejam na lista de 'remoteStock' vinda do servidor (saldo zero).
+    return products
+      .filter((p) => p.ativo)
+      .map((product) => {
+        const remoteItem = remoteStock.find((item) => item.produtoId === product.id);
+        if (remoteItem) return remoteItem;
+
+        // Fallback para produto sem movimentacao no servidor
+        return {
+          produtoId: product.id,
+          produtoNome: product.nome,
+          categoria: product.categoria,
+          unidade: product.unidade,
+          areaResponsavel: product.areaResponsavel,
+          quantidadeEntrada: 0,
+          quantidadeSaida: 0,
+          saldoAtual: 0,
+          custoMedio: 0,
+          valorEstoque: 0,
+          estoqueMinimo: product.estoqueMinimo,
+          status: 0 <= product.estoqueMinimo ? "baixo" : "ok",
+        } satisfies InventoryStockItem;
+      })
+      .sort((left, right) => left.produtoNome.localeCompare(right.produtoNome));
+  }, [isRemoteMode, remoteStock, localStock, products]);
+
   const areaSummaries = useMemo(() => buildAreaSummaries(products, entries, exits), [products, entries, exits]);
   const totalItemsInStock = useMemo(() => round(stock.reduce((sum, item) => sum + item.saldoAtual, 0)), [stock]);
   const totalInventoryValue = useMemo(() => round(stock.reduce((sum, item) => sum + item.valorEstoque, 0)), [stock]);
@@ -492,6 +419,14 @@ export function InventoryDataProvider({ children }: PropsWithChildren) {
         ...current,
       ]);
     },
+    deleteEntry: async (id) => {
+      if (isRemoteMode && token) {
+        await deleteInventoryEntryApi(token, id);
+        await reloadData();
+        return;
+      }
+      setEntries((current) => current.filter((item) => item.id !== id));
+    },
     addExit: async (exit) => {
       if (isRemoteMode && token) {
         await createInventoryExitApi(token, {
@@ -516,6 +451,14 @@ export function InventoryDataProvider({ children }: PropsWithChildren) {
         },
         ...current,
       ]);
+    },
+    deleteExit: async (id) => {
+      if (isRemoteMode && token) {
+        await deleteInventoryExitApi(token, id);
+        await reloadData();
+        return;
+      }
+      setExits((current) => current.filter((item) => item.id !== id));
     },
     getProductById: (productId) => products.find((product) => product.id === productId),
     reloadData,

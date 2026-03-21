@@ -1,5 +1,5 @@
 {
-  "name": "controle-combustivel-functions",
+  "name": "controle-estoque-combustivel-functions",
   "version": "0.1.0",
   "private": true,
   "main": "lib/index.js",

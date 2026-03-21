@@ -1,5 +1,5 @@
 {
-  "name": "controle-combustivel-server",
+  "name": "controle-estoque-combustivel-server",
   "version": "0.1.0",
   "private": true,
   "type": "module",

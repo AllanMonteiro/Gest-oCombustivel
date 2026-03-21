@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 import { FormField } from "@/components/forms/form-field";
 import { PageHeader } from "@/components/shared/page-header";
@@ -10,6 +10,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useInventoryData } from "@/contexts/inventory/inventory-data-context";
 import { supabaseClient } from "@/services/firebase/client";
+import { Trash2 } from "lucide-react";
 
 const parseDecimal = (value: unknown) => {
   if (typeof value === "number") return value;
@@ -88,7 +89,7 @@ function formatCurrency(value: number) {
 }
 
 export function EstoqueGeralPage() {
-  const { products, stock, entries, exits, areaSummaries, totalItemsInStock, totalInventoryValue, addEntry, addExit, getProductById, isRemoteMode, isSyncing, syncError } = useInventoryData();
+  const { products, stock, entries, exits, areaSummaries, totalItemsInStock, totalInventoryValue, addEntry, addExit, deleteEntry, deleteExit, getProductById, isRemoteMode, isSyncing, syncError } = useInventoryData();
   const [entryForm, setEntryForm] = useState<EntryFormData>(initialEntryForm);
   const [exitForm, setExitForm] = useState<ExitFormData>(initialExitForm);
   const [entryErrors, setEntryErrors] = useState<FormErrors<EntryFormData>>({});
@@ -353,10 +354,29 @@ export function EstoqueGeralPage() {
       <SectionCard title="Ultimas movimentacoes do estoque geral" description="Visao rapida das entradas e retiradas recentes, incluindo o destino por area e equipamento.">
         <div className="grid gap-3 lg:grid-cols-2">
           {recentMovements.map((item) => (
-            <div key={item.id} className="rounded-2xl border border-border bg-background p-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge className={item.type === "entrada" ? "border border-sky-200 bg-sky-50 text-sky-700" : "border border-rose-200 bg-rose-50 text-rose-700"}>{item.type === "entrada" ? "Entrada" : "Saida"}</Badge>
-                <p className="font-semibold text-foreground">{item.produtoNome}</p>
+            <div key={item.id} className="group relative rounded-2xl border border-border bg-background p-4 transition-colors hover:border-accent/30">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Badge className={item.type === "entrada" ? "border border-sky-200 bg-sky-50 text-sky-700" : "border border-rose-200 bg-rose-50 text-rose-700"}>{item.type === "entrada" ? "Entrada" : "Saida"}</Badge>
+                  <p className="font-semibold text-foreground">{item.produtoNome}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (window.confirm(`Deseja realmente excluir esta ${item.type}?`)) {
+                      if (item.type === "entrada") {
+                        await deleteEntry(item.id);
+                      } else {
+                        await deleteExit(item.id);
+                      }
+                      setMessage("Registro excluido com sucesso.");
+                    }
+                  }}
+                  className="opacity-0 transition-opacity hover:text-rose-600 group-hover:opacity-100 p-1"
+                  title="Excluir registro"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </div>
               <p className="mt-2 text-sm text-muted-foreground">{new Intl.DateTimeFormat("pt-BR").format(new Date(item.data))} | Quantidade: {item.quantidade.toLocaleString("pt-BR")}</p>
               <p className="mt-1 text-sm text-muted-foreground">{item.type === "entrada" ? `Fornecedor: ${item.detalhes}` : `Solicitante: ${item.detalhes}`}</p>

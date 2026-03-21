@@ -1,4 +1,4 @@
-import type { PropsWithChildren } from "react";
+ï»¿import type { PropsWithChildren } from "react";
 
 export function AuthLayout({ children }: PropsWithChildren) {
   return (
@@ -9,10 +9,10 @@ export function AuthLayout({ children }: PropsWithChildren) {
             Plataforma administrativa
           </p>
           <h1 className="mt-5 text-4xl font-semibold leading-tight">
-            Controle seguro de combustível com visão operacional e gerencial.
+            Controle de Estoque e CombustÃ­vel
           </h1>
           <p className="mt-5 max-w-lg text-sm leading-7 text-primary-foreground/80">
-            Base pronta para autenticação, rastreabilidade, estoque consolidado, relatórios e indicadores de consumo.
+            Base pronta para autenticaÃ§Ã£o, rastreabilidade, estoque consolidado, relatÃ³rios e indicadores de consumo.
           </p>
         </section>
         <section className="bg-white px-6 py-10 sm:px-10">{children}</section>
