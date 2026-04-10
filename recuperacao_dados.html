@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recuperação de Dados - Controle de Combustível</title>
+    <style>
+        body { font-family: sans-serif; padding: 40px; line-height: 1.6; color: #333; background: #f4f7f6; }
+        .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        h1 { color: #1a202c; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+        .card { border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; margin-bottom: 20px; transition: all 0.2s; }
+        .card:hover { border-color: #3182ce; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .key { font-weight: bold; color: #2d3748; background: #edf2f7; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+        .summary { margin: 10px 0; font-size: 0.9em; }
+        .btn { display: inline-block; background: #3182ce; color: #fff; padding: 10px 20px; border-radius: 6px; text-decoration: none; cursor: pointer; border: none; font-weight: bold; }
+        .btn:hover { background: #2b6cb0; }
+        .btn-secondary { background: #e2e8f0; color: #4a5568; }
+        .btn-secondary:hover { background: #cbd5e0; }
+        .empty { text-align: center; padding: 40px; color: #718096; }
+        pre { background: #f7fafc; padding: 15px; border-radius: 6px; overflow-x: auto; font-size: 0.85em; max-height: 300px; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: bold; text-transform: uppercase; margin-left: 10px; }
+        .badge-success { background: #c6f6d5; color: #22543d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Buscador de Dados Perdidos</h1>
+        <p>Este utilitário busca por dados salvos em versões anteriores do sistema no seu navegador.</p>
+        
+        <div id="results">
+            <div class="empty">Buscando no LocalStorage...</div>
+        </div>
+
+        <hr style="margin: 40px 0; border: 0; border-top: 1px solid #e2e8f0;">
+        <button class="btn btn-secondary" onclick="scan()">Atualizar Busca</button>
+    </div>
+
+    <script>
+        const CURRENT_OPERATIONAL_KEY = "controle-combustivel-local-data-v6";
+        const CURRENT_INVENTORY_KEY = "controle-combustivel-estoque-geral-v1";
+
+        function scan() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+            let found = false;
+
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.includes('controle-combustivel') || key.includes('combustivel')) {
+                    found = true;
+                    try {
+                        const data = JSON.parse(localStorage.getItem(key));
+                        renderCard(key, data);
+                    } catch (e) {
+                        console.error('Erro ao ler chave', key, e);
+                    }
+                }
+            }
+
+            if (!found) {
+                resultsDiv.innerHTML = '<div class="empty">Nenhum dado antigo encontrado no armazenamento local deste navegador.</div>';
+            }
+        }
+
+        function renderCard(key, data) {
+            const resultsDiv = document.getElementById('results');
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            let summary = "";
+            let counts = {};
+
+            if (data.entries) counts.entradas = data.entries.length;
+            if (data.exits) counts.saidas = data.exits.length;
+            if (data.products) counts.produtos = data.products.length;
+
+            summary = Object.entries(counts).map(([k, v]) => `<strong>${v}</strong> ${k}`).join(', ') || "Dados em formato desconhecido";
+            const isLatest = key === CURRENT_OPERATIONAL_KEY || key === CURRENT_INVENTORY_KEY;
+
+            card.innerHTML = `
+                <div>
+                    <span class="key">${key}</span>
+                    ${isLatest ? '<span class="badge badge-success">Versão Atual</span>' : '<span class="badge">Versão Antiga</span>'}
+                </div>
+                <div class="summary">${summary}</div>
+                <details>
+                    <summary style="cursor: pointer; color: #3182ce; font-size: 0.8em;">Ver detalhes (JSON)</summary>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </details>
+                <div style="margin-top: 15px;">
+                    <button class="btn" onclick="restore('${key}')">Migrar para Versão Atual</button>
+                </div>
+            `;
+            resultsDiv.appendChild(card);
+        }
+
+        function restore(oldKey) {
+            if (oldKey === CURRENT_OPERATIONAL_KEY) {
+                alert("Este já é o dado da versão atual.");
+                return;
+            }
+
+            if(!confirm("Isso copiará os dados de '" + oldKey + "' para a versão atual (" + CURRENT_OPERATIONAL_KEY + "). Deseja continuar?")) return;
+
+            try {
+                const oldData = JSON.parse(localStorage.getItem(oldKey));
+                const currentDataStr = localStorage.getItem(CURRENT_OPERATIONAL_KEY);
+                let currentData = currentDataStr ? JSON.parse(currentDataStr) : { entries: [], exits: [] };
+
+                // Mesclagem simples
+                if (oldData.entries) currentData.entries = [...currentData.entries, ...oldData.entries];
+                if (oldData.exits) currentData.exits = [...currentData.exits, ...oldData.exits];
+
+                localStorage.setItem(CURRENT_OPERATIONAL_KEY, JSON.stringify(currentData));
+                alert("Dados migrados com sucesso! Recarregue o sistema para ver as mudanças.");
+                scan();
+            } catch (e) {
+                alert("Erro ao migrar dados: " + e.message);
+            }
+        }
+
+        scan();
+    </script>
+</body>
+</html>

@@ -1,9 +1,11 @@
-import { Bell, LogOut, Search } from "lucide-react";
+import { Bell, LogOut, Search, Cloud, CloudOff, AlertTriangle, Download } from "lucide-react";
 import type { PropsWithChildren } from "react";
 import { NavLink } from "react-router-dom";
 import { AppLogo } from "@/components/shared/app-logo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth/AuthContext";
+import { useFuelData } from "@/contexts/fuel/fuel-data-context";
+import { useInventoryData } from "@/contexts/inventory/inventory-data-context";
 import { cn } from "@/lib/utils";
 import { primaryNavigation, registryNavigation } from "@/utils/constants/navigation";
 
@@ -41,6 +43,11 @@ function NavigationSection({ title, items }: { title: string; items: typeof prim
 
 export function AdminLayout({ children }: PropsWithChildren) {
   const { profile, isSupabaseConfigured, isAuthenticated, signOut } = useAuth();
+  const { isRemoteMode: fuelRemote, entries, exits } = useFuelData();
+  const { isRemoteMode: inventoryRemote, products: invProds } = useInventoryData();
+
+  const isFullyRemote = fuelRemote && inventoryRemote;
+  const hasLocalData = entries.length > 0 || exits.length > 0 || invProds.length > 0;
 
   return (
     <div className="page-shell">
@@ -51,9 +58,47 @@ export function AdminLayout({ children }: PropsWithChildren) {
             <NavigationSection title="Operacao" items={primaryNavigation} />
             <NavigationSection title="Cadastros" items={registryNavigation} />
           </div>
+
+          <div className="mt-auto pt-10">
+            <div className={cn(
+              "rounded-2xl border p-4",
+              isFullyRemote ? "border-emerald-100 bg-emerald-50/50" : "border-amber-100 bg-amber-50/50"
+            )}>
+              <div className="flex items-center gap-3">
+                {isFullyRemote ? (
+                  <Cloud className="h-5 w-5 text-emerald-600" />
+                ) : (
+                  <CloudOff className="h-5 w-5 text-amber-600" />
+                )}
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-foreground">
+                    Status: {isFullyRemote ? "Nuvem" : "Local"}
+                  </p>
+                  <p className="mt-0.5 text-[10px] text-muted-foreground leading-relaxed">
+                    {isFullyRemote ? "Sincronização ativa (Seguro)" : "Dados salvos apenas neste navegador"}
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <NavLink to="/relatorios" className="mt-4 flex items-center gap-2 px-4 py-2 text-xs font-semibold text-sidebar-foreground/70 hover:text-sidebar-foreground transition-colors">
+              <Download className="h-3 w-3" />
+              Backup Manual (CSV)
+            </NavLink>
+          </div>
         </aside>
         <div className="flex min-h-screen flex-col">
           <header className="sticky top-0 z-20 border-b border-border/80 bg-background/90 px-5 py-4 backdrop-blur lg:px-8">
+            {!isFullyRemote && hasLocalData && (
+              <div className="mb-4 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 animate-in fade-in slide-in-from-top-2 duration-300">
+                <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600" />
+                <p>
+                  <strong>Atenção:</strong> Você tem dados locais que <strong>não</strong> estão na nuvem. 
+                  Se você limpar o cache do navegador, poderá perdê-los. 
+                  <span className="hidden sm:inline"> Faça login ou verifique sua conexão para sincronizar.</span>
+                </p>
+              </div>
+            )}
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-accent">Painel administrativo</p>

@@ -58,11 +58,17 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     let mounted = true;
 
-    supabaseClient.auth.getSession().then(({ data }) => {
-      if (!mounted) return;
-      setSession(data.session ?? null);
-      setStatus(data.session ? "authenticated" : "unauthenticated");
-    });
+    supabaseClient.auth.getSession()
+      .then(({ data }) => {
+        if (!mounted) return;
+        setSession(data.session ?? null);
+        setStatus(data.session ? "authenticated" : "unauthenticated");
+      })
+      .catch((err) => {
+        console.error("Erro ao recuperar sessao:", err);
+        if (!mounted) return;
+        setStatus("unauthenticated");
+      });
 
     const {
       data: { subscription },
