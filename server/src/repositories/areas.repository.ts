@@ -7,12 +7,14 @@ export async function createAreaData(data: { nome: string; descricao?: string; a
       nome: data.nome,
       descricao: data.descricao,
       ativo: data.ativo,
-      created_at: new Date().toISOString(),
     }])
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error(`[CORTEX] Erro ao criar area na tabela 'areas':`, error);
+    throw error;
+  }
   return area;
 }
 

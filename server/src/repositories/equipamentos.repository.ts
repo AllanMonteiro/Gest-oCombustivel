@@ -8,12 +8,14 @@ export async function createEquipamentoData(data: { nome: string; tipo: string; 
       tipo: data.tipo,
       area_padrao: data.area_padrao,
       ativo: data.ativo,
-      created_at: new Date().toISOString(),
     }])
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error(`[CORTEX] Erro ao criar equipamento na tabela 'equipamentos':`, error);
+    throw error;
+  }
   return equip;
 }
 

@@ -19,7 +19,22 @@ export function errorHandler(error: unknown, _request: Request, response: Respon
     });
   }
 
-  // Se for um erro do Supabase ou outro erro inesperado
+  // Se for um erro do Supabase (PostgreSQL)
+  const pgError = error as any;
+  if (pgError.code === "23505") { // Unique violation
+    return response.status(409).json({
+      message: "Este registro ja existe (conflito de chave unica).",
+      details: pgError.message || pgError.details,
+    });
+  }
+
+  if (pgError.code && pgError.code.startsWith("23")) { // Outros erros de constraint
+    return response.status(400).json({
+      message: "Erro de integridade de dados.",
+      details: pgError.message || pgError.details,
+    });
+  }
+
   const errorMessage = error instanceof Error ? error.message : "Erro interno do servidor.";
   
   return response.status(500).json({ 

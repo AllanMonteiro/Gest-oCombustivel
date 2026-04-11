@@ -8,12 +8,14 @@ export async function createCombustivelData(data: { nome: string; codigo: string
       codigo: data.codigo,
       unidade: data.unidade,
       ativo: data.ativo,
-      created_at: new Date().toISOString(),
     }])
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error(`[CORTEX] Erro ao criar combustivel na tabela 'combustiveis':`, error);
+    throw error;
+  }
   return fuel;
 }
 
