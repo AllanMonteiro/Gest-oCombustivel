@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/auth/AuthContext";
+import { useFuelData } from "@/contexts/fuel/fuel-data-context";
 import { createAreaApi, fetchAreasApi } from "@/services/modules/inventory-api-service";
 import { useState, useEffect, useCallback } from "react";
 import { Map, BadgeCheck, XCircle } from "lucide-react";
@@ -23,32 +24,14 @@ type FormData = z.infer<typeof schema>;
 
 export function AreasPage() {
   const { session } = useAuth();
+  const { areas, reloadData, isSyncing: loading } = useFuelData();
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [areas, setAreas] = useState<any[]>([]);
   
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { nome: "", descricao: "", ativo: "true" },
   });
-
-  const loadAreas = useCallback(async () => {
-    if (!session?.access_token) return;
-    setLoading(true);
-    try {
-      const data = await fetchAreasApi(session.access_token);
-      setAreas(data);
-    } catch (error) {
-      console.error("Erro ao carregar areas:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [session]);
-
-  useEffect(() => {
-    loadAreas();
-  }, [loadAreas]);
 
   const onSubmit = async (data: FormData) => {
     if (!session?.access_token) {
@@ -65,7 +48,7 @@ export function AreasPage() {
       });
       setMessage("Área cadastrada com sucesso!");
       form.reset();
-      loadAreas();
+      await reloadData();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Erro ao cadastrar área.");
     } finally {

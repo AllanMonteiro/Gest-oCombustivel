@@ -52,11 +52,13 @@ const initialForm: EntradaFormData = {
 };
 
 export function EntradasPage() {
-  const { entries, addEntry, cancelEntry, stockByFuel, isRemoteMode, isSyncing, syncError } = useFuelData();
+  const { entries, addEntry, cancelEntry, stockByFuel, isRemoteMode, isSyncing, syncError, fuels } = useFuelData();
   const [mensagem, setMensagem] = useState("");
   const [errors, setErrors] = useState<EntradaErrors>({});
   const [form, setForm] = useState<EntradaFormData>(initialForm);
   const [saving, setSaving] = useState(false);
+
+  const activeFuels = useMemo(() => fuels.filter(f => f.ativo), [fuels]);
 
   const regularEntries = useMemo(() => entries.filter((item) => item.movementType === "regular"), [entries]);
   const litros = parseDecimal(form.litros);
@@ -125,7 +127,15 @@ export function EntradasPage() {
             <div className="grid flex-1 gap-4 md:grid-cols-2 xl:grid-cols-6">
               <FormField label="Data" error={errors.data}><Input type="date" value={form.data} onChange={(event) => updateField("data", event.target.value)} /></FormField>
               <FormField label="Fornecedor" error={errors.fornecedor}><Input placeholder="Ex.: Petro Norte" value={form.fornecedor} onChange={(event) => updateField("fornecedor", event.target.value)} /></FormField>
-              <FormField label="Combustivel" error={errors.combustivel}><Select value={form.combustivel} onChange={(event) => updateField("combustivel", event.target.value)}><option value="">Selecione</option><option>Diesel S10</option><option>Diesel S500</option><option>Gasolina</option><option>Etanol</option></Select></FormField>
+              <FormField label="Combustivel" error={errors.combustivel}>
+                <Select value={form.combustivel} onChange={(event) => updateField("combustivel", event.target.value)}>
+                  <option value="">Selecione</option>
+                  {activeFuels.length > 0
+                    ? activeFuels.map(f => <option key={f.id} value={f.nome}>{f.nome}</option>)
+                    : <><option>Diesel S10</option><option>Diesel S500</option><option>Gasolina</option><option>Etanol</option></>
+                  }
+                </Select>
+              </FormField>
               <FormField label="Litros" error={errors.litros}><Input type="text" inputMode="decimal" placeholder="5000" value={form.litros} onChange={(event) => updateField("litros", event.target.value)} /></FormField>
               <FormField label="Valor por litro" error={errors.valorLitro}><Input type="text" inputMode="decimal" placeholder="8,50" value={form.valorLitro} onChange={(event) => updateField("valorLitro", event.target.value)} /></FormField>
               <FormField label="Nota fiscal" error={errors.notaFiscal}><Input placeholder="NF-000123" value={form.notaFiscal} onChange={(event) => updateField("notaFiscal", event.target.value)} /></FormField>

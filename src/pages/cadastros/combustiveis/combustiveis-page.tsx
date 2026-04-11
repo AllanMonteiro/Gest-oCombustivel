@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { useAuth } from "@/contexts/auth/AuthContext";
+import { useFuelData } from "@/contexts/fuel/fuel-data-context";
 import { createCombustivelApi } from "@/services/modules/inventory-api-service";
 import { useState } from "react";
 
@@ -22,6 +23,7 @@ type FormData = z.infer<typeof schema>;
 
 export function CombustiveisPage() {
   const { session } = useAuth();
+  const { reloadData } = useFuelData();
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -43,6 +45,7 @@ export function CombustiveisPage() {
       });
       setMessage("Combustivel cadastrado com sucesso!");
       form.reset();
+      await reloadData();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Erro ao cadastrar combustivel.");
     } finally {

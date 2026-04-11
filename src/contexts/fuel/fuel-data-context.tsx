@@ -19,6 +19,7 @@ import {
   type RemoteEntryRecord,
   type RemoteExitRecord,
 } from "@/services/modules/operational-api-service";
+import { fetchAreasApi, fetchEquipamentosApi, fetchCombustiveisApi } from "@/services/modules/inventory-api-service";
 
 export type FuelType = "Diesel S10" | "Diesel S500" | "Gasolina" | "Etanol";
 export type MovementStatus = "active" | "cancelled";
@@ -98,12 +99,15 @@ interface FuelDataContextValue {
   cancelEntry: (id: string, reason: string) => Promise<void>;
   cancelExit: (id: string, reason: string) => Promise<void>;
   reloadData: () => Promise<void>;
+  areas: any[];
+  equipments: any[];
+  fuels: any[];
 }
 
 const STORAGE_KEY = "controle-combustivel-local-data-v6";
 const initialEntries: FuelEntryRecord[] = [];
 const initialExits: FuelExitRecord[] = [];
-const fuelTypes: FuelType[] = ["Diesel S10", "Diesel S500", "Gasolina", "Etanol"];
+const DEFAULT_FUEL_TYPES: FuelType[] = ["Diesel S10", "Diesel S500", "Gasolina", "Etanol"];
 const FuelDataContext = createContext<FuelDataContextValue | null>(null);
 
 function round(value: number) {
@@ -118,11 +122,13 @@ function activeExits(exits: FuelExitRecord[]) {
   return exits.filter((item) => item.status === "active");
 }
 
-function buildStock(entries: FuelEntryRecord[], exits: FuelExitRecord[]) {
+function buildStock(entries: FuelEntryRecord[], exits: FuelExitRecord[], fuelList: any[]) {
   const validEntries = activeEntries(entries);
   const validExits = activeExits(exits);
 
-  return fuelTypes.map((combustivel) => {
+  const fuelNames = fuelList.length > 0 ? fuelList.filter(f => f.ativo).map(f => f.nome) : DEFAULT_FUEL_TYPES;
+
+  return fuelNames.map((combustivel) => {
     const fuelEntries = validEntries.filter((item) => item.combustivel === combustivel);
     const fuelExits = validExits.filter((item) => item.combustivel === combustivel);
     const regularPurchaseEntries = fuelEntries.filter((item) => item.movementType === "regular");
@@ -240,6 +246,9 @@ export function FuelDataProvider({ children }: PropsWithChildren) {
   const { isAuthenticated, profile, session } = useAuth();
   const [entries, setEntries] = useState<FuelEntryRecord[]>(initialEntries);
   const [exits, setExits] = useState<FuelExitRecord[]>(initialExits);
+  const [areas, setAreas] = useState<any[]>([]);
+  const [equipments, setEquipments] = useState<any[]>([]);
+  const [fuels, setFuels] = useState<any[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
 
@@ -273,6 +282,19 @@ export function FuelDataProvider({ children }: PropsWithChildren) {
       const state = await fetchOperationalState(token);
       setEntries(state.entries.map(toLocalEntry));
       setExits(state.exits.map(toLocalExit));
+
+      try {
+        const [areasList, equipmentsList, fuelsList] = await Promise.all([
+          fetchAreasApi(token),
+          fetchEquipamentosApi(token),
+          fetchCombustiveisApi(token)
+        ]);
+        setAreas(areasList);
+        setEquipments(equipmentsList);
+        setFuels(fuelsList);
+      } catch (err) {
+        console.error("Erro ao carregar cadastros auxiliares:", err);
+      }
     } catch (error) {
       setSyncError(error instanceof Error ? error.message : "Falha ao sincronizar dados operacionais.");
     } finally {
@@ -285,7 +307,7 @@ export function FuelDataProvider({ children }: PropsWithChildren) {
     void reloadData();
   }, [isRemoteMode, token]);
 
-  const stockByFuel = useMemo(() => buildStock(entries, exits), [entries, exits]);
+  const stockByFuel = useMemo(() => buildStock(entries, exits, fuels), [entries, exits, fuels]);
   const partnerBalances = useMemo(() => buildPartnerBalances(entries, exits), [entries, exits]);
   const totalStockLiters = useMemo(() => round(stockByFuel.reduce((sum, item) => sum + item.saldoLitros, 0)), [stockByFuel]);
   const totalExitLiters = useMemo(() => round(activeExits(exits).reduce((sum, item) => sum + item.litros, 0)), [exits]);
@@ -405,7 +427,10 @@ export function FuelDataProvider({ children }: PropsWithChildren) {
       setExits((current) => current.map((item) => item.id === id ? { ...item, status: "cancelled", cancellationReason: reason, cancelledAt: new Date().toISOString() } : item));
     },
     reloadData,
-  }), [entries, exits, stockByFuel, partnerBalances, totalStockLiters, totalExitLiters, totalEstimatedValue, totalLoanInLiters, totalLoanOutLiters, totalOwedLiters, isRemoteMode, isSyncing, syncError, token]);
+    areas,
+    equipments,
+    fuels,
+  }), [entries, exits, stockByFuel, partnerBalances, totalStockLiters, totalExitLiters, totalEstimatedValue, totalLoanInLiters, totalLoanOutLiters, totalOwedLiters, isRemoteMode, isSyncing, syncError, token, areas, equipments, fuels]);
 
   return <FuelDataContext.Provider value={value}>{children}</FuelDataContext.Provider>;
 }

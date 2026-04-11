@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { useAuth } from "@/contexts/auth/AuthContext";
+import { useFuelData } from "@/contexts/fuel/fuel-data-context";
 import { createEquipamentoApi, fetchAreasApi } from "@/services/modules/inventory-api-service";
 import { useState, useEffect } from "react";
 
@@ -22,19 +23,14 @@ type FormData = z.infer<typeof schema>;
 
 export function EquipamentosPage() {
   const { session } = useAuth();
+  const { areas, equipments, reloadData } = useFuelData();
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
-  const [areas, setAreas] = useState<any[]>([]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { nome: "", tipo: "", areaPadrao: "", ativo: "true" },
   });
-
-  useEffect(() => {
-    if (!session?.access_token) return;
-    fetchAreasApi(session.access_token).then(setAreas).catch(console.error);
-  }, [session]);
 
   const onSubmit = async (data: FormData) => {
     if (!session?.access_token) return;
@@ -49,6 +45,7 @@ export function EquipamentosPage() {
       });
       setMessage("Equipamento cadastrado com sucesso!");
       form.reset();
+      await reloadData();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Erro ao cadastrar equipamento.");
     } finally {

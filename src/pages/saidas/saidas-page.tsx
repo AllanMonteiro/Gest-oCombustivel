@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { z } from "zod";
 import { FormField } from "@/components/forms/form-field";
 import { SectionCard } from "@/components/shared/section-card";
@@ -54,12 +54,17 @@ const initialForm: SaidaFormData = {
   observacao: "",
 };
 
-export function SaidasPage() {
-  const { exits, stockByFuel, addExit, cancelExit, isRemoteMode, isSyncing, syncError } = useFuelData();
+  export function SaidasPage() {
+  const { exits, stockByFuel, addExit, cancelExit, isRemoteMode, isSyncing, syncError, areas, equipments, fuels } = useFuelData();
   const [mensagem, setMensagem] = useState("");
   const [errors, setErrors] = useState<SaidaErrors>({});
   const [form, setForm] = useState<SaidaFormData>(initialForm);
   const [saving, setSaving] = useState(false);
+
+  // We filter to show only active registrations for new entries
+  const activeAreas = useMemo(() => areas.filter(a => a.ativo), [areas]);
+  const activeEquipments = useMemo(() => equipments.filter(e => e.ativo), [equipments]);
+  const activeFuels = useMemo(() => fuels.filter(f => f.ativo), [fuels]);
 
   const regularExits = useMemo(() => exits.filter((item) => item.movementType === "regular"), [exits]);
 
@@ -133,11 +138,35 @@ export function SaidasPage() {
           <div className="flex flex-col gap-4 xl:flex-row xl:items-end">
             <div className="grid flex-1 gap-4 md:grid-cols-2 xl:grid-cols-7">
               <FormField label="Data" error={errors.data}><Input type="date" value={form.data} onChange={(event) => updateField("data", event.target.value)} /></FormField>
-              <FormField label="Combustivel" error={errors.combustivel}><Select value={form.combustivel} onChange={(event) => updateField("combustivel", event.target.value)}><option value="">Selecione</option><option>Diesel S10</option><option>Diesel S500</option><option>Gasolina</option><option>Etanol</option></Select></FormField>
+              <FormField label="Combustivel" error={errors.combustivel}>
+                <Select value={form.combustivel} onChange={(event) => updateField("combustivel", event.target.value)}>
+                  <option value="">Selecione</option>
+                  {activeFuels.length > 0
+                    ? activeFuels.map(f => <option key={f.id} value={f.nome}>{f.nome}</option>)
+                    : <><option>Diesel S10</option><option>Diesel S500</option><option>Gasolina</option><option>Etanol</option></>
+                  }
+                </Select>
+              </FormField>
               <FormField label="Litros" error={errors.litros}><Input type="text" inputMode="decimal" placeholder="180" value={form.litros} onChange={(event) => updateField("litros", event.target.value)} /></FormField>
               <FormField label="Quem utilizou" error={errors.usuarioNome}><Input placeholder="Nome do colaborador" value={form.usuarioNome} onChange={(event) => updateField("usuarioNome", event.target.value)} /></FormField>
-              <FormField label="Area destino" error={errors.area}><Select value={form.area} onChange={(event) => updateField("area", event.target.value)}><option value="">Selecione</option><option>Area Norte</option><option>Area Sul</option><option>Manutencao</option><option>Operacao de Campo</option></Select></FormField>
-              <FormField label="Equipamento" error={errors.equipamento}><Select value={form.equipamento} onChange={(event) => updateField("equipamento", event.target.value)}><option value="">Selecione</option><option>Trator 01</option><option>Escavadeira X</option><option>Caminhao 12</option></Select></FormField>
+              <FormField label="Area destino" error={errors.area}>
+                <Select value={form.area} onChange={(event) => updateField("area", event.target.value)}>
+                  <option value="">Selecione</option>
+                  {activeAreas.length > 0 
+                    ? activeAreas.map(a => <option key={a.id} value={a.nome}>{a.nome}</option>)
+                    : <><option>Area Norte</option><option>Area Sul</option><option>Manutencao</option><option>Operacao de Campo</option></>
+                  }
+                </Select>
+              </FormField>
+              <FormField label="Equipamento" error={errors.equipamento}>
+                <Select value={form.equipamento} onChange={(event) => updateField("equipamento", event.target.value)}>
+                  <option value="">Selecione</option>
+                  {activeEquipments.length > 0 
+                    ? activeEquipments.map(e => <option key={e.id} value={e.nome}>{e.nome}</option>)
+                    : <><option>Trator 01</option><option>Escavadeira X</option><option>Caminhao 12</option></>
+                  }
+                </Select>
+              </FormField>
               <FormField label="Requisicao" error={errors.requisicao}><Input placeholder="Numero ou codigo da requisicao" value={form.requisicao} onChange={(event) => updateField("requisicao", event.target.value)} /></FormField>
             </div>
             <Button type="submit" size="sm" className="h-10 px-3 xl:min-w-[130px]" disabled={saving || isSyncing}>{saving ? "Salvando..." : "Salvar"}</Button>
