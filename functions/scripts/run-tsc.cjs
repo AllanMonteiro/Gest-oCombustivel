@@ -1,11 +1,17 @@
-const { spawnSync } = require("node:child_process");
+const { spawnSync, execSync } = require("node:child_process");
 const { existsSync } = require("node:fs");
 const path = require("node:path");
+
+let globalNpmRoot = "";
+try {
+  globalNpmRoot = execSync("npm root -g", { encoding: "utf8" }).trim();
+} catch (_) {}
 
 const candidates = [
   path.resolve(__dirname, "../node_modules/typescript/bin/tsc"),
   path.resolve(__dirname, "../../node_modules/typescript/bin/tsc"),
-];
+  globalNpmRoot ? path.join(globalNpmRoot, "typescript/bin/tsc") : "",
+].filter(Boolean);
 
 const tscPath = candidates.find((candidate) => existsSync(candidate));
 
