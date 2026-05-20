@@ -25,6 +25,7 @@ export function CombustiveisPage() {
   const { session } = useAuth();
   const { reloadData } = useFuelData();
   const [message, setMessage] = useState("");
+  const [isError, setIsError] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const form = useForm<FormData>({
@@ -36,6 +37,7 @@ export function CombustiveisPage() {
     if (!session?.access_token) return;
     setSaving(true);
     setMessage("");
+    setIsError(false);
     try {
       await createCombustivelApi(session.access_token, {
         nome: data.nome,
@@ -44,10 +46,12 @@ export function CombustiveisPage() {
         ativo: data.ativo === "true",
       });
       setMessage("Combustivel cadastrado com sucesso!");
+      setIsError(false);
       form.reset();
       await reloadData();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Erro ao cadastrar combustivel.");
+      setIsError(true);
     } finally {
       setSaving(false);
     }
@@ -75,7 +79,7 @@ export function CombustiveisPage() {
               <option value="false">Inativo</option>
             </Select>
           </FormField>
-          {message ? <div className={`md:col-span-2 px-4 py-3 rounded-2xl text-sm ${message.includes("Erro") ? "bg-amber-50 text-amber-800 border border-amber-200" : "bg-emerald-50 text-emerald-800 border border-emerald-200"}`}>{message}</div> : null}
+          {message ? <div className={`md:col-span-2 px-4 py-3 rounded-2xl text-sm ${isError ? "bg-amber-50 text-amber-800 border border-amber-200" : "bg-emerald-50 text-emerald-800 border border-emerald-200"}`}>{message}</div> : null}
         </form>
       </SectionCard>
     </div>

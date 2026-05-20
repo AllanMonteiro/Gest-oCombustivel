@@ -26,6 +26,7 @@ export function AreasPage() {
   const { session } = useAuth();
   const { areas, reloadData, isSyncing: loading } = useFuelData();
   const [message, setMessage] = useState("");
+  const [isError, setIsError] = useState(false);
   const [saving, setSaving] = useState(false);
   
   const form = useForm<FormData>({
@@ -36,10 +37,12 @@ export function AreasPage() {
   const onSubmit = async (data: FormData) => {
     if (!session?.access_token) {
       setMessage("Erro: Você precisa estar logado.");
+      setIsError(true);
       return;
     }
     setSaving(true);
     setMessage("");
+    setIsError(false);
     try {
       await createAreaApi(session.access_token, {
         nome: data.nome,
@@ -47,10 +50,12 @@ export function AreasPage() {
         ativo: data.ativo === "true",
       });
       setMessage("Área cadastrada com sucesso!");
+      setIsError(false);
       form.reset();
       await reloadData();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Erro ao cadastrar área.");
+      setIsError(true);
     } finally {
       setSaving(false);
     }
@@ -90,7 +95,7 @@ export function AreasPage() {
                 />
               </FormField>
               {message ? (
-                <div className={`px-4 py-3 rounded-2xl text-sm ${message.includes("Erro") ? "bg-amber-50 text-amber-800 border border-amber-200" : "bg-emerald-50 text-emerald-800 border border-emerald-200"}`}>
+                <div className={`px-4 py-3 rounded-2xl text-sm ${isError ? "bg-amber-50 text-amber-800 border border-amber-200" : "bg-emerald-50 text-emerald-800 border border-emerald-200"}`}>
                   {message}
                 </div>
               ) : null}

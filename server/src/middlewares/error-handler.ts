@@ -22,8 +22,25 @@ export function errorHandler(error: unknown, _request: Request, response: Respon
   // Se for um erro do Supabase (PostgreSQL)
   const pgError = error as any;
   if (pgError.code === "23505") { // Unique violation
+    const detail = String(pgError.detail || pgError.message || "");
+    let userMessage = "Este registro já existe (conflito de chave única).";
+
+    if (detail.includes("combustiveis_codigo_key")) {
+      userMessage = "Já existe um combustível cadastrado com este código.";
+    } else if (detail.includes("combustiveis_nome_key")) {
+      userMessage = "Já existe um combustível cadastrado com este nome.";
+    } else if (detail.includes("users_email_key")) {
+      userMessage = "Este e-mail já está cadastrado.";
+    } else if (detail.includes("areas_nome_key")) {
+      userMessage = "Já existe uma área cadastrada com este nome.";
+    } else if (detail.includes("equipamentos_nome_key")) {
+      userMessage = "Já existe um equipamento cadastrado com este nome.";
+    } else if (detail.includes("produtos_gerais_nome_key")) {
+      userMessage = "Já existe um produto cadastrado com este nome.";
+    }
+
     return response.status(409).json({
-      message: "Este registro ja existe (conflito de chave unica).",
+      message: userMessage,
       details: pgError.message || pgError.details,
     });
   }
