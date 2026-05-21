@@ -52,10 +52,13 @@ export function errorHandler(error: unknown, _request: Request, response: Respon
     });
   }
 
-  const errorMessage = error instanceof Error ? error.message : "Erro interno do servidor.";
+  const errObj = error as any;
+  const errorMessage = errObj?.message || (error instanceof Error ? error.message : "Erro interno do servidor.");
+  const errorDetails = errObj?.details || errObj?.hint || undefined;
   
   return response.status(500).json({ 
     message: errorMessage,
-    error: process.env.NODE_ENV === "development" ? error : undefined
+    details: errorDetails,
+    error: process.env.NODE_ENV === "development" ? error : { message: errorMessage, details: errorDetails }
   });
 }
