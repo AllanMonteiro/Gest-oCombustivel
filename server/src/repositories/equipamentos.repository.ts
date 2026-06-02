@@ -1,12 +1,13 @@
 import { supabaseAdmin } from "../config/supabase.js";
 
-export async function createEquipamentoData(data: { nome: string; tipo: string; area_padrao?: string; ativo: boolean }) {
+export async function createEquipamentoData(data: { nome: string; tipo: string; area_padrao_id?: string; area_padrao_nome?: string; ativo: boolean }) {
   const { data: equip, error } = await supabaseAdmin
     .from("equipamentos")
     .insert([{
       nome: data.nome,
       tipo: data.tipo,
-      area_padrao: data.area_padrao,
+      area_padrao_id: data.area_padrao_id || null,
+      area_padrao_nome: data.area_padrao_nome || null,
       ativo: data.ativo,
     }])
     .select()

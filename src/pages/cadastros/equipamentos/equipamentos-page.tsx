@@ -9,8 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { useAuth } from "@/contexts/auth/AuthContext";
 import { useFuelData } from "@/contexts/fuel/fuel-data-context";
-import { createEquipamentoApi, fetchAreasApi } from "@/services/modules/inventory-api-service";
-import { useState, useEffect } from "react";
+import { createEquipamentoApi } from "@/services/modules/inventory-api-service";
+import { useState } from "react";
 
 const schema = z.object({
   nome: z.string().min(2, "Informe o nome"),
@@ -23,7 +23,7 @@ type FormData = z.infer<typeof schema>;
 
 export function EquipamentosPage() {
   const { session } = useAuth();
-  const { areas, equipments, reloadData } = useFuelData();
+  const { areas, reloadData } = useFuelData();
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -39,10 +39,12 @@ export function EquipamentosPage() {
     setMessage("");
     setIsError(false);
     try {
+      const selectedArea = areas.find(a => a.id === data.areaPadrao);
       await createEquipamentoApi(session.access_token, {
         nome: data.nome,
         tipo: data.tipo,
-        areaPadrao: data.areaPadrao,
+        areaPadraoId: data.areaPadrao,
+        areaPadraoNome: selectedArea?.nome ?? "",
         ativo: data.ativo === "true",
       });
       setMessage("Equipamento cadastrado com sucesso!");
@@ -71,7 +73,7 @@ export function EquipamentosPage() {
           <FormField label="Area padrao" error={form.formState.errors.areaPadrao?.message}>
             <Select defaultValue="" {...form.register("areaPadrao")}>
               <option value="" disabled>Selecione</option>
-              {areas.filter(a => a.ativo).map(a => <option key={a.id} value={a.nome}>{a.nome}</option>)}
+              {areas.filter(a => a.ativo).map(a => <option key={a.id} value={a.id}>{a.nome}</option>)}
             </Select>
           </FormField>
           <FormField label="Status" error={form.formState.errors.ativo?.message}>

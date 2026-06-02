@@ -3,7 +3,7 @@ import { createEquipamentoData, getEquipamentosData } from "../repositories/equi
 import { HttpError } from "../utils/http-error.js";
 
 export async function createEquipamentoController(request: Request, response: Response) {
-  const { nome, tipo, areaPadrao, ativo } = request.body;
+  const { nome, tipo, areaPadraoId, areaPadraoNome, ativo } = request.body;
 
   if (!nome || !tipo) {
     throw new HttpError(400, "Nome e tipo do equipamento sao obrigatorios.");
@@ -12,7 +12,8 @@ export async function createEquipamentoController(request: Request, response: Re
   const equip = await createEquipamentoData({
     nome,
     tipo,
-    area_padrao: areaPadrao,
+    area_padrao_id: areaPadraoId,
+    area_padrao_nome: areaPadraoNome,
     ativo: typeof ativo === "boolean" ? ativo : ativo === "true",
   });
 
