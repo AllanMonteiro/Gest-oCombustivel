@@ -23,6 +23,7 @@ const saidaSchema = z.object({
   data: z.string().min(1, "Informe a data"),
   combustivel: z.custom<FuelType>((value) => typeof value === "string" && value.length > 0, { message: "Selecione o combustivel" }),
   litros: z.preprocess(parseDecimal, z.number().positive("Informe os litros")),
+  usuarioId: z.string().optional(),
   usuarioNome: z.string().min(2, "Informe quem utilizou"),
   area: z.string().min(1, "Selecione a area"),
   equipamento: z.string().min(1, "Selecione o equipamento"),
@@ -34,6 +35,7 @@ type SaidaFormData = {
   data: string;
   combustivel: string;
   litros: string;
+  usuarioId: string;
   usuarioNome: string;
   area: string;
   equipamento: string;
@@ -47,6 +49,7 @@ const initialForm: SaidaFormData = {
   data: "",
   combustivel: "",
   litros: "",
+  usuarioId: "",
   usuarioNome: "",
   area: "",
   equipamento: "",
@@ -55,7 +58,7 @@ const initialForm: SaidaFormData = {
 };
 
   export function SaidasPage() {
-  const { exits, stockByFuel, addExit, cancelExit, isRemoteMode, isSyncing, syncError, areas, equipments, fuels } = useFuelData();
+  const { exits, stockByFuel, addExit, cancelExit, isRemoteMode, isSyncing, syncError, areas, equipments, fuels, profiles } = useFuelData();
   const [mensagem, setMensagem] = useState("");
   const [errors, setErrors] = useState<SaidaErrors>({});
   const [form, setForm] = useState<SaidaFormData>(initialForm);
@@ -65,6 +68,7 @@ const initialForm: SaidaFormData = {
   const activeAreas = useMemo(() => areas.filter(a => a.ativo), [areas]);
   const activeEquipments = useMemo(() => equipments.filter(e => e.ativo), [equipments]);
   const activeFuels = useMemo(() => fuels.filter(f => f.ativo), [fuels]);
+  const activeProfiles = useMemo(() => profiles.filter(p => p.ativo), [profiles]);
 
   const regularExits = useMemo(() => exits.filter((item) => item.movementType === "regular"), [exits]);
 
@@ -72,6 +76,17 @@ const initialForm: SaidaFormData = {
     setMensagem("");
     setErrors((current) => ({ ...current, [field]: undefined }));
     setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleUsuarioChange = (profileId: string) => {
+    const profile = activeProfiles.find(p => p.id === profileId);
+    setMensagem("");
+    setErrors(current => ({ ...current, usuarioId: undefined, usuarioNome: undefined }));
+    setForm(current => ({
+      ...current,
+      usuarioId: profileId,
+      usuarioNome: profile?.nome ?? "",
+    }));
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -103,6 +118,7 @@ const initialForm: SaidaFormData = {
         data: data.data,
         combustivel: data.combustivel,
         litros: data.litros,
+        usuarioId: data.usuarioId || undefined,
         usuarioNome: data.usuarioNome,
         area: data.area,
         equipamento: data.equipamento,
@@ -148,7 +164,15 @@ const initialForm: SaidaFormData = {
                 </Select>
               </FormField>
               <FormField label="Litros" error={errors.litros}><Input type="text" inputMode="decimal" placeholder="180" value={form.litros} onChange={(event) => updateField("litros", event.target.value)} /></FormField>
-              <FormField label="Quem utilizou" error={errors.usuarioNome}><Input placeholder="Nome do colaborador" value={form.usuarioNome} onChange={(event) => updateField("usuarioNome", event.target.value)} /></FormField>
+              <FormField label="Quem utilizou" error={errors.usuarioNome}>
+                {activeProfiles.length > 0
+                  ? <Select value={form.usuarioId} onChange={(event) => handleUsuarioChange(event.target.value)}>
+                      <option value="">Selecione</option>
+                      {activeProfiles.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                    </Select>
+                  : <Input placeholder="Nome do colaborador" value={form.usuarioNome} onChange={(event) => updateField("usuarioNome", event.target.value)} />
+                }
+              </FormField>
               <FormField label="Area destino" error={errors.area}>
                 <Select value={form.area} onChange={(event) => updateField("area", event.target.value)}>
                   <option value="">Selecione</option>

@@ -19,7 +19,7 @@ import {
   type RemoteEntryRecord,
   type RemoteExitRecord,
 } from "@/services/modules/operational-api-service";
-import { fetchAreasApi, fetchEquipamentosApi, fetchCombustiveisApi } from "@/services/modules/inventory-api-service";
+import { fetchAreasApi, fetchEquipamentosApi, fetchCombustiveisApi, fetchProfilesApi } from "@/services/modules/inventory-api-service";
 
 export type FuelType = "Diesel S10" | "Diesel S500" | "Gasolina" | "Etanol";
 export type MovementStatus = "active" | "cancelled";
@@ -50,6 +50,7 @@ export interface FuelExitRecord extends CancellationData {
   data: string;
   combustivel: FuelType;
   litros: number;
+  usuarioId?: string;
   usuarioNome: string;
   area: string;
   equipamento: string;
@@ -102,6 +103,7 @@ interface FuelDataContextValue {
   areas: any[];
   equipments: any[];
   fuels: any[];
+  profiles: any[];
 }
 
 const STORAGE_KEY = "controle-combustivel-local-data-v6";
@@ -243,12 +245,13 @@ function toLocalExit(item: RemoteExitRecord): FuelExitRecord {
 }
 
 export function FuelDataProvider({ children }: PropsWithChildren) {
-  const { isAuthenticated, profile, session } = useAuth();
+  const { isAuthenticated, session } = useAuth();
   const [entries, setEntries] = useState<FuelEntryRecord[]>(initialEntries);
   const [exits, setExits] = useState<FuelExitRecord[]>(initialExits);
   const [areas, setAreas] = useState<any[]>([]);
   const [equipments, setEquipments] = useState<any[]>([]);
   const [fuels, setFuels] = useState<any[]>([]);
+  const [profiles, setProfiles] = useState<any[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
 
@@ -284,14 +287,16 @@ export function FuelDataProvider({ children }: PropsWithChildren) {
       setExits(state.exits.map(toLocalExit));
 
       try {
-        const [areasList, equipmentsList, fuelsList] = await Promise.all([
+        const [areasList, equipmentsList, fuelsList, profilesList] = await Promise.all([
           fetchAreasApi(token),
           fetchEquipamentosApi(token),
-          fetchCombustiveisApi(token)
+          fetchCombustiveisApi(token),
+          fetchProfilesApi(token),
         ]);
         setAreas(areasList);
         setEquipments(equipmentsList);
         setFuels(fuelsList);
+        setProfiles(profilesList);
       } catch (err) {
         console.error("Erro ao carregar cadastros auxiliares:", err);
       }
@@ -374,6 +379,7 @@ export function FuelDataProvider({ children }: PropsWithChildren) {
           data: exit.data,
           combustivel: exit.combustivel,
           litros: exit.litros,
+          usuarioId: exit.usuarioId,
           usuarioNome: exit.usuarioNome,
           areaNome: exit.area,
           equipamentoNome: exit.equipamento,
@@ -394,6 +400,7 @@ export function FuelDataProvider({ children }: PropsWithChildren) {
           data: exit.data,
           combustivel: exit.combustivel,
           litros: exit.litros,
+          usuarioId: exit.usuarioId,
           usuarioNome: exit.usuarioNome,
           areaNome: exit.area,
           equipamentoNome: exit.equipamento,
@@ -430,7 +437,8 @@ export function FuelDataProvider({ children }: PropsWithChildren) {
     areas,
     equipments,
     fuels,
-  }), [entries, exits, stockByFuel, partnerBalances, totalStockLiters, totalExitLiters, totalEstimatedValue, totalLoanInLiters, totalLoanOutLiters, totalOwedLiters, isRemoteMode, isSyncing, syncError, token, areas, equipments, fuels]);
+    profiles,
+  }), [entries, exits, stockByFuel, partnerBalances, totalStockLiters, totalExitLiters, totalEstimatedValue, totalLoanInLiters, totalLoanOutLiters, totalOwedLiters, isRemoteMode, isSyncing, syncError, token, areas, equipments, fuels, profiles]);
 
   return <FuelDataContext.Provider value={value}>{children}</FuelDataContext.Provider>;
 }

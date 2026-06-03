@@ -136,11 +136,13 @@ export async function updateEntryData(id: string, payload: Record<string, unknow
 
   if (updateError) throw new HttpError(500, updateError.message, updateError);
 
-  await supabaseAdmin.rpc("recalculate_stock", { p_combustivel_id: current.combustivel_id });
+  const { error: recalcOldError } = await supabaseAdmin.rpc("recalculate_stock", { p_combustivel_id: current.combustivel_id });
+  if (recalcOldError) console.error("[CORTEX] Erro ao recalcular estoque (combustivel anterior):", recalcOldError.message);
   if (current.combustivel_id !== combustivelId) {
-    await supabaseAdmin.rpc("recalculate_stock", { p_combustivel_id: combustivelId });
+    const { error: recalcNewError } = await supabaseAdmin.rpc("recalculate_stock", { p_combustivel_id: combustivelId });
+    if (recalcNewError) console.error("[CORTEX] Erro ao recalcular estoque (combustivel novo):", recalcNewError.message);
   }
-  await supabaseAdmin.rpc("insert_audit_log", {
+  const { error: auditError1 } = await supabaseAdmin.rpc("insert_audit_log", {
     p_acao: "update",
     p_entidade: "entrada_combustivel",
     p_entidade_id: id,
@@ -149,6 +151,7 @@ export async function updateEntryData(id: string, payload: Record<string, unknow
     p_usuario_id: actorId,
     p_usuario_nome: actorName,
   });
+  if (auditError1) console.error("[CORTEX] Erro ao registrar audit log (update entrada):", auditError1.message);
 
   return updated;
 }
@@ -203,11 +206,13 @@ export async function updateExitData(id: string, payload: Record<string, unknown
 
   if (updateError) throw new HttpError(500, updateError.message, updateError);
 
-  await supabaseAdmin.rpc("recalculate_stock", { p_combustivel_id: current.combustivel_id });
+  const { error: recalcExitOldError } = await supabaseAdmin.rpc("recalculate_stock", { p_combustivel_id: current.combustivel_id });
+  if (recalcExitOldError) console.error("[CORTEX] Erro ao recalcular estoque (combustivel anterior):", recalcExitOldError.message);
   if (current.combustivel_id !== combustivelId) {
-    await supabaseAdmin.rpc("recalculate_stock", { p_combustivel_id: combustivelId });
+    const { error: recalcExitNewError } = await supabaseAdmin.rpc("recalculate_stock", { p_combustivel_id: combustivelId });
+    if (recalcExitNewError) console.error("[CORTEX] Erro ao recalcular estoque (combustivel novo):", recalcExitNewError.message);
   }
-  await supabaseAdmin.rpc("insert_audit_log", {
+  const { error: auditError2 } = await supabaseAdmin.rpc("insert_audit_log", {
     p_acao: "update",
     p_entidade: "saida_combustivel",
     p_entidade_id: id,
@@ -216,6 +221,7 @@ export async function updateExitData(id: string, payload: Record<string, unknown
     p_usuario_id: actorId,
     p_usuario_nome: actorName,
   });
+  if (auditError2) console.error("[CORTEX] Erro ao registrar audit log (update saida):", auditError2.message);
 
   return updated;
 }
@@ -332,8 +338,9 @@ export async function cancelEntryData(id: string, reason: string, actorId: strin
 
   if (updateError) throw new HttpError(500, updateError.message, updateError);
 
-  await supabaseAdmin.rpc("recalculate_stock", { p_combustivel_id: current.combustivel_id });
-  await supabaseAdmin.rpc("insert_audit_log", {
+  const { error: recalcCancelEntryError } = await supabaseAdmin.rpc("recalculate_stock", { p_combustivel_id: current.combustivel_id });
+  if (recalcCancelEntryError) console.error("[CORTEX] Erro ao recalcular estoque (cancel entrada):", recalcCancelEntryError.message);
+  const { error: auditError3 } = await supabaseAdmin.rpc("insert_audit_log", {
     p_acao: "cancel",
     p_entidade: "entrada_combustivel",
     p_entidade_id: id,
@@ -342,6 +349,7 @@ export async function cancelEntryData(id: string, reason: string, actorId: strin
     p_usuario_id: actorId,
     p_usuario_nome: actorName,
   });
+  if (auditError3) console.error("[CORTEX] Erro ao registrar audit log (cancel entrada):", auditError3.message);
 
   return updated;
 }
@@ -364,8 +372,9 @@ export async function cancelExitData(id: string, reason: string, actorId: string
 
   if (updateError) throw new HttpError(500, updateError.message, updateError);
 
-  await supabaseAdmin.rpc("recalculate_stock", { p_combustivel_id: current.combustivel_id });
-  await supabaseAdmin.rpc("insert_audit_log", {
+  const { error: recalcCancelExitError } = await supabaseAdmin.rpc("recalculate_stock", { p_combustivel_id: current.combustivel_id });
+  if (recalcCancelExitError) console.error("[CORTEX] Erro ao recalcular estoque (cancel saida):", recalcCancelExitError.message);
+  const { error: auditError4 } = await supabaseAdmin.rpc("insert_audit_log", {
     p_acao: "cancel",
     p_entidade: "saida_combustivel",
     p_entidade_id: id,
@@ -374,6 +383,7 @@ export async function cancelExitData(id: string, reason: string, actorId: string
     p_usuario_id: actorId,
     p_usuario_nome: actorName,
   });
+  if (auditError4) console.error("[CORTEX] Erro ao registrar audit log (cancel saida):", auditError4.message);
 
   return updated;
 }
