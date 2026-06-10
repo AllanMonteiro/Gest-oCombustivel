@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "../config/supabase.js";
+import { HttpError } from "../utils/http-error.js";
 
 export async function createAreaData(data: { nome: string; descricao?: string; ativo: boolean }) {
   const { data: area, error } = await supabaseAdmin
@@ -11,10 +12,7 @@ export async function createAreaData(data: { nome: string; descricao?: string; a
     .select()
     .single();
 
-  if (error) {
-    console.error(`[CORTEX] Erro ao criar area na tabela 'areas':`, error);
-    throw error;
-  }
+  if (error) throw new HttpError(500, error.message || "Erro ao criar area.", error);
   return area;
 }
 
@@ -24,6 +22,6 @@ export async function getAreasData() {
     .select("*")
     .order("nome", { ascending: true });
 
-  if (error) throw error;
+  if (error) throw new HttpError(500, error.message || "Erro ao buscar areas.", error);
   return data || [];
 }

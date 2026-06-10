@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "../config/supabase.js";
+import { HttpError } from "../utils/http-error.js";
 
 export async function createCombustivelData(data: { nome: string; codigo: string; unidade: string; ativo: boolean }) {
   const { data: fuel, error } = await supabaseAdmin
@@ -12,10 +13,7 @@ export async function createCombustivelData(data: { nome: string; codigo: string
     .select()
     .single();
 
-  if (error) {
-    console.error(`[CORTEX] Erro ao criar combustivel na tabela 'combustiveis':`, error);
-    throw error;
-  }
+  if (error) throw new HttpError(500, error.message || "Erro ao criar combustivel.", error);
   return fuel;
 }
 
@@ -25,6 +23,6 @@ export async function getCombustiveisData() {
     .select("*")
     .order("nome", { ascending: true });
 
-  if (error) throw error;
+  if (error) throw new HttpError(500, error.message || "Erro ao buscar combustiveis.", error);
   return data || [];
 }

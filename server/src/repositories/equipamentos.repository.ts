@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "../config/supabase.js";
+import { HttpError } from "../utils/http-error.js";
 
 export async function createEquipamentoData(data: { nome: string; tipo: string; area_padrao_id?: string; area_padrao_nome?: string; ativo: boolean }) {
   const { data: equip, error } = await supabaseAdmin
@@ -13,10 +14,7 @@ export async function createEquipamentoData(data: { nome: string; tipo: string; 
     .select()
     .single();
 
-  if (error) {
-    console.error(`[CORTEX] Erro ao criar equipamento na tabela 'equipamentos':`, error);
-    throw error;
-  }
+  if (error) throw new HttpError(500, error.message || "Erro ao criar equipamento.", error);
   return equip;
 }
 
@@ -26,6 +24,6 @@ export async function getEquipamentosData() {
     .select("*")
     .order("nome", { ascending: true });
 
-  if (error) throw error;
+  if (error) throw new HttpError(500, error.message || "Erro ao buscar equipamentos.", error);
   return data || [];
 }
